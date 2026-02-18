@@ -1,0 +1,93 @@
+[gd_scene load_steps=13 format=3 uid="uid://bo0fst2hqjnws"]
+
+[ext_resource type="Texture2D" uid="uid://dss3e3xrgqudm" path="res://asset/PNG/Effects/Explosion.png" id="1_14krs"]
+[ext_resource type="Script" path="res://script/explode_animate.gd" id="2_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fjpkp"]
+atlas = ExtResource("1_14krs")
+region = Rect2(0, 0, 106, 78)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_imqh4"]
+atlas = ExtResource("1_14krs")
+region = Rect2(106, 0, 106, 78)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_u6lfh"]
+atlas = ExtResource("1_14krs")
+region = Rect2(212, 0, 106, 78)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1jqvb"]
+atlas = ExtResource("1_14krs")
+region = Rect2(318, 0, 106, 78)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_85amh"]
+atlas = ExtResource("1_14krs")
+region = Rect2(424, 0, 106, 78)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_flnjv"]
+atlas = ExtResource("1_14krs")
+region = Rect2(530, 0, 106, 78)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1qydj"]
+atlas = ExtResource("1_14krs")
+region = Rect2(636, 0, 106, 78)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gcrp4"]
+atlas = ExtResource("1_14krs")
+region = Rect2(742, 0, 106, 78)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_kwuvg"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fjpkp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_imqh4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_u6lfh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1jqvb")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_85amh")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_flnjv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1qydj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gcrp4")
+}],
+"loop": false,
+"name": &"Explosion",
+"speed": 10.0
+}]
+
+[sub_resource type="Gradient" id="Gradient_sparks"]
+offsets = PackedFloat32Array(0, 0.536424, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 0.654902, 0.231373, 1, 1, 0.211765, 0, 0)
+
+[node name="ExplodeAnimate" type="Node2D"]
+script = ExtResource("2_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_kwuvg")
+animation = &"Explosion"
+
+[node name="Sparks" type="CPUParticles2D" parent="."]
+emitting = false
+amount = 60
+one_shot = true
+explosiveness = 1.0
+lifetime = 0.8
+spread = 180.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 100.0
+initial_velocity_max = 350.0
+scale_amount_min = 2.0
+scale_amount_max = 8.0
+color_ramp = SubResource("Gradient_sparks")

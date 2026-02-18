@@ -1,0 +1,68 @@
+[gd_scene load_steps=10 format=3 uid="uid://slrwlx0yxfss"]
+
+[ext_resource type="Script" path="res://script/meteor_projectile.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://asset/PNG/Meteors/MeteorRed3.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://asset/PNG/Effects/fire00.png" id="3_fire"]
+[ext_resource type="AudioStream" uid="uid://g4rx6bsaqddo" path="res://asset/Bonus/Explosion.ogg" id="5_audio"]
+
+[sub_resource type="Gradient" id="Gradient_trail"]
+offsets = PackedFloat32Array(0, 0.470199, 1)
+colors = PackedColorArray(1, 0.898039, 0, 1, 1, 0.384314, 0, 1, 1, 0, 0, 0)
+
+[sub_resource type="Gradient" id="Gradient_glow"]
+interpolation_mode = 2
+offsets = PackedFloat32Array(0, 0.7)
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_glow"]
+gradient = SubResource("Gradient_glow")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_1"]
+radius = 12.0
+
+[node name="MeteorProjectile" type="Area2D"]
+collision_layer = 8
+collision_mask = 1
+script = ExtResource("1_script")
+speed = 300
+
+[node name="Trail" type="CPUParticles2D" parent="."]
+amount = 25
+lifetime = 0.4
+texture = ExtResource("3_fire")
+emission_shape = 1
+emission_sphere_radius = 8.0
+direction = Vector2(0, 1)
+spread = 20.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 50.0
+initial_velocity_max = 100.0
+angular_velocity_min = -100.0
+angular_velocity_max = 100.0
+scale_amount_min = 0.05
+scale_amount_max = 0.15
+color_ramp = SubResource("Gradient_trail")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("2_tex")
+
+[node name="PointLight2D" type="PointLight2D" parent="."]
+color = Color(1, 0.541176, 0.180392, 1)
+energy = 1.2
+texture = SubResource("GradientTexture2D_glow")
+texture_scale = 2.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_1")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]
+
+[node name="ExplosionSound" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("5_audio")
+volume_db = -20.0
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_visible_on_screen_notifier_2d_screen_exited"]

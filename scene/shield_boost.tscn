@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://script/power_up.gd" id="1_rvmqh"]
+[ext_resource type="Texture2D" path="res://asset/PNG/Boost/Shield.png" id="2_shield"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_shield"]
+radius = 26.0
+
+[node name="ShieldBoost" type="Area2D"]
+collision_layer = 8
+collision_mask = 1
+script = ExtResource("1_rvmqh")
+boost_type = 2
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_shield")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_shield")
+
+[connection signal="body_entered" from="." method="_on_body_entered"]

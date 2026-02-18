@@ -1,0 +1,180 @@
+[gd_scene format=3 uid="uid://cdmlr4i6ymcu"]
+
+[ext_resource type="Script" uid="uid://b3eof3dpd6emp" path="res://script/boss_behavior.gd" id="1_boss"]
+[ext_resource type="Texture2D" uid="uid://bg4x43yfsybfv" path="res://asset/PNG/Enemies/BigBoss.png" id="2_jkukl"]
+[ext_resource type="Script" uid="uid://bhj07o15dn38y" path="res://script/guardian_static.gd" id="3_guardian"]
+[ext_resource type="Texture2D" uid="uid://cwnw51kj4gr27" path="res://asset/PNG/Guardian/Guardian1.png" id="4_jkukl"]
+[ext_resource type="Texture2D" uid="uid://cyfp5eng6x0ji" path="res://asset/PNG/Guardian/Guardian2.png" id="4_red"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_boss"]
+radius = 60.0
+
+[sub_resource type="Animation" id="Animation_pulse"]
+resource_name = "idle"
+length = 2.0
+loop_mode = 1
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_boss"]
+_data = {
+&"idle": SubResource("Animation_pulse")
+}
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_guardian"]
+radius = 20.0
+
+[node name="MeteorBoss" type="Area2D" unique_id=322772111]
+collision_layer = 2
+collision_mask = 3
+script = ExtResource("1_boss")
+enter_speed = 80
+speed = 20
+hp = 100
+points = 2000
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=6115692]
+position = Vector2(0, -1.9073486e-06)
+scale = Vector2(0.39779007, 0.39779004)
+texture = ExtResource("2_jkukl")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1970057863]
+shape = SubResource("CircleShape2D_boss")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="." unique_id=660345970]
+position = Vector2(0, -153)
+
+[node name="HPLabel" type="Label" parent="." unique_id=348614168]
+visible = false
+offset_left = -20.0
+offset_top = -80.0
+offset_right = 20.0
+offset_bottom = -57.0
+horizontal_alignment = 1
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=697735106]
+libraries/ = SubResource("AnimationLibrary_boss")
+autoplay = &"idle"
+
+[node name="EscortFormation" type="Node2D" parent="." unique_id=1124754372]
+
+[node name="MarsLeft1" type="Area2D" parent="EscortFormation" unique_id=899945989]
+position = Vector2(-150, 0)
+collision_layer = 2
+script = ExtResource("3_guardian")
+hp = 10
+
+[node name="Sprite2D" type="Sprite2D" parent="EscortFormation/MarsLeft1" unique_id=625239242]
+scale = Vector2(0.13, 0.13)
+texture = ExtResource("4_jkukl")
+flip_v = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EscortFormation/MarsLeft1" unique_id=461830536]
+shape = SubResource("CircleShape2D_guardian")
+
+[node name="MarsRight1" type="Area2D" parent="EscortFormation" unique_id=1862464739]
+position = Vector2(150, 0)
+collision_layer = 2
+script = ExtResource("3_guardian")
+hp = 10
+
+[node name="Sprite2D" type="Sprite2D" parent="EscortFormation/MarsRight1" unique_id=1668965641]
+scale = Vector2(0.13, 0.13)
+texture = ExtResource("4_jkukl")
+flip_v = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EscortFormation/MarsRight1" unique_id=2075843849]
+shape = SubResource("CircleShape2D_guardian")
+
+[node name="MarsTop" type="Area2D" parent="EscortFormation" unique_id=622094708]
+position = Vector2(0, -150)
+collision_layer = 2
+script = ExtResource("3_guardian")
+hp = 10
+
+[node name="Sprite2D" type="Sprite2D" parent="EscortFormation/MarsTop" unique_id=2027689023]
+scale = Vector2(0.13, 0.13)
+texture = ExtResource("4_jkukl")
+flip_v = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EscortFormation/MarsTop" unique_id=776982638]
+shape = SubResource("CircleShape2D_guardian")
+
+[node name="MarsBottom" type="Area2D" parent="EscortFormation" unique_id=976759340]
+position = Vector2(0, 150)
+collision_layer = 2
+script = ExtResource("3_guardian")
+hp = 10
+
+[node name="Sprite2D" type="Sprite2D" parent="EscortFormation/MarsBottom" unique_id=768921098]
+scale = Vector2(0.13, 0.13)
+texture = ExtResource("4_jkukl")
+flip_v = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EscortFormation/MarsBottom" unique_id=1449926261]
+shape = SubResource("CircleShape2D_guardian")
+
+[node name="MarsTopLeft" type="Area2D" parent="EscortFormation" unique_id=1147738029]
+position = Vector2(-106, -106)
+collision_layer = 2
+script = ExtResource("3_guardian")
+hp = 10
+
+[node name="Sprite2D" type="Sprite2D" parent="EscortFormation/MarsTopLeft" unique_id=84640619]
+scale = Vector2(0.13, 0.13)
+texture = ExtResource("4_red")
+flip_v = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EscortFormation/MarsTopLeft" unique_id=1855441877]
+shape = SubResource("CircleShape2D_guardian")
+
+[node name="MarsTopRight" type="Area2D" parent="EscortFormation" unique_id=542535607]
+position = Vector2(106, -106)
+collision_layer = 2
+script = ExtResource("3_guardian")
+hp = 10
+
+[node name="Sprite2D" type="Sprite2D" parent="EscortFormation/MarsTopRight" unique_id=1140974482]
+scale = Vector2(0.13, 0.13)
+texture = ExtResource("4_red")
+flip_v = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EscortFormation/MarsTopRight" unique_id=2038434312]
+shape = SubResource("CircleShape2D_guardian")
+
+[node name="MarsBottomLeft" type="Area2D" parent="EscortFormation" unique_id=415627370]
+position = Vector2(-106, 106)
+collision_layer = 2
+script = ExtResource("3_guardian")
+hp = 10
+
+[node name="Sprite2D" type="Sprite2D" parent="EscortFormation/MarsBottomLeft" unique_id=2106082348]
+scale = Vector2(0.13, 0.13)
+texture = ExtResource("4_red")
+flip_v = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EscortFormation/MarsBottomLeft" unique_id=1987578654]
+shape = SubResource("CircleShape2D_guardian")
+
+[node name="MarsBottomRight" type="Area2D" parent="EscortFormation" unique_id=1616074131]
+position = Vector2(106, 106)
+collision_layer = 2
+script = ExtResource("3_guardian")
+hp = 10
+
+[node name="Sprite2D" type="Sprite2D" parent="EscortFormation/MarsBottomRight" unique_id=914915613]
+scale = Vector2(0.13, 0.13)
+texture = ExtResource("4_red")
+flip_v = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EscortFormation/MarsBottomRight" unique_id=1095904729]
+shape = SubResource("CircleShape2D_guardian")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_visible_on_screen_notifier_2d_screen_exited"]
+[connection signal="body_entered" from="EscortFormation/MarsLeft1" to="EscortFormation/MarsLeft1" method="_on_body_entered"]
+[connection signal="body_entered" from="EscortFormation/MarsRight1" to="EscortFormation/MarsRight1" method="_on_body_entered"]
+[connection signal="body_entered" from="EscortFormation/MarsTop" to="EscortFormation/MarsTop" method="_on_body_entered"]
+[connection signal="body_entered" from="EscortFormation/MarsBottom" to="EscortFormation/MarsBottom" method="_on_body_entered"]
+[connection signal="body_entered" from="EscortFormation/MarsTopLeft" to="EscortFormation/MarsTopLeft" method="_on_body_entered"]
+[connection signal="body_entered" from="EscortFormation/MarsTopRight" to="EscortFormation/MarsTopRight" method="_on_body_entered"]
+[connection signal="body_entered" from="EscortFormation/MarsBottomLeft" to="EscortFormation/MarsBottomLeft" method="_on_body_entered"]
+[connection signal="body_entered" from="EscortFormation/MarsBottomRight" to="EscortFormation/MarsBottomRight" method="_on_body_entered"]

@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://dj510iomctebw"]
+
+[ext_resource type="PackedScene" uid="uid://7fhdvrero4mu" path="res://scene/enemy.tscn" id="1_gxm8f"]
+[ext_resource type="Texture2D" uid="uid://cu2xlm0uqny7w" path="res://asset/PNG/Meteors/MeteorSilver1.png" id="2_vlcxw"]
+
+[node name="DriverEnemy" instance=ExtResource("1_gxm8f")]
+speed = 320
+hp = 1
+points = 75
+
+[node name="Sprite2D" parent="." index="0"]
+position = Vector2(-0.2124778, 0.3487263)
+scale = Vector2(0.9040337, 0.6964706)
+texture = ExtResource("2_vlcxw")
+
+[node name="VisibleOnScreenNotifier2D" parent="." index="2"]
+position = Vector2(0, -50)

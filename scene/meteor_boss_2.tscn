@@ -1,0 +1,117 @@
+[gd_scene format=3 uid="uid://blynmupro7cba"]
+
+[ext_resource type="Script" uid="uid://s50ppge2ulxo" path="res://script/boss_behavior_2.gd" id="1_boss"]
+[ext_resource type="Texture2D" uid="uid://b2ud1d8uoj42f" path="res://asset/PNG/Enemies/BigBoss2.png" id="2_tex"]
+[ext_resource type="PackedScene" uid="uid://dnqw4tufrulsc" path="res://scene/boss_protector.tscn" id="3_prot"]
+[ext_resource type="Shader" uid="uid://bjjc51ltcvy7a" path="res://script/hit_outline.gdshader" id="4_fk61f"]
+[ext_resource type="Texture2D" uid="uid://lho8gilexanq" path="res://asset/PNG/Guardian/GuardianRed5.png" id="5_g5"]
+[ext_resource type="Texture2D" uid="uid://cwugwvjr7vrul" path="res://asset/PNG/Guardian/GuardianRed7.png" id="6_g7"]
+[ext_resource type="Texture2D" uid="uid://ba42s3vtag302" path="res://asset/PNG/Guardian/GuardianRed8.png" id="7_g8"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_boss"]
+radius = 60.00833
+
+[sub_resource type="Animation" id="Animation_idle"]
+resource_name = "idle"
+length = 2.0
+loop_mode = 1
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_boss"]
+_data = {
+&"idle": SubResource("Animation_idle")
+}
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_fydpj"]
+resource_local_to_scene = true
+shader = ExtResource("4_fk61f")
+shader_parameter/outline_color = Color(1, 0, 0, 1)
+shader_parameter/outline_width = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_8l40g"]
+resource_local_to_scene = true
+shader = ExtResource("4_fk61f")
+shader_parameter/outline_color = Color(1, 0, 0, 1)
+shader_parameter/outline_width = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_lgtf3"]
+resource_local_to_scene = true
+shader = ExtResource("4_fk61f")
+shader_parameter/outline_color = Color(1, 0, 0, 1)
+shader_parameter/outline_width = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xc4gb"]
+resource_local_to_scene = true
+shader = ExtResource("4_fk61f")
+shader_parameter/outline_color = Color(1, 0, 0, 1)
+shader_parameter/outline_width = 0.0
+
+[node name="MeteorBoss2" type="Area2D" unique_id=1441210510]
+collision_layer = 2
+collision_mask = 3
+script = ExtResource("1_boss")
+enter_speed = 80
+speed = 20
+hp = 150
+points = 3000
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1185806205]
+scale = Vector2(0.6, 0.6)
+texture = ExtResource("2_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=100909791]
+shape = SubResource("CircleShape2D_boss")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="." unique_id=1328456613]
+position = Vector2(0, -150)
+
+[node name="HPLabel" type="Label" parent="." unique_id=204313847]
+visible = false
+offset_left = -20.0
+offset_top = -80.0
+offset_right = 20.0
+horizontal_alignment = 1
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=169482110]
+libraries/ = SubResource("AnimationLibrary_boss")
+autoplay = &"idle"
+
+[node name="EscortFormation" type="Node2D" parent="." unique_id=392032310]
+
+[node name="Guardian3" parent="EscortFormation" unique_id=1005333336 instance=ExtResource("3_prot")]
+position = Vector2(0, -180)
+hp = 20
+
+[node name="Sprite2D" parent="EscortFormation/Guardian3" index="0" unique_id=1080974341]
+material = SubResource("ShaderMaterial_fydpj")
+
+[node name="Guardian5" parent="EscortFormation" unique_id=668263395 instance=ExtResource("3_prot")]
+position = Vector2(180, 0)
+hp = 20
+
+[node name="Sprite2D" parent="EscortFormation/Guardian5" index="0" unique_id=1080974341]
+material = SubResource("ShaderMaterial_8l40g")
+texture = ExtResource("5_g5")
+
+[node name="Guardian7" parent="EscortFormation" unique_id=1799232045 instance=ExtResource("3_prot")]
+position = Vector2(0, 180)
+hp = 20
+
+[node name="Sprite2D" parent="EscortFormation/Guardian7" index="0" unique_id=1080974341]
+material = SubResource("ShaderMaterial_lgtf3")
+texture = ExtResource("6_g7")
+
+[node name="Guardian8" parent="EscortFormation" unique_id=665120628 instance=ExtResource("3_prot")]
+position = Vector2(-180, 0)
+hp = 20
+
+[node name="Sprite2D" parent="EscortFormation/Guardian8" index="0" unique_id=1080974341]
+material = SubResource("ShaderMaterial_xc4gb")
+texture = ExtResource("7_g8")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_visible_on_screen_notifier_2d_screen_exited"]
+
+[editable path="EscortFormation/Guardian3"]
+[editable path="EscortFormation/Guardian5"]
+[editable path="EscortFormation/Guardian7"]
+[editable path="EscortFormation/Guardian8"]

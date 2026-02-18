@@ -1,0 +1,39 @@
+[gd_scene format=3 uid="uid://g1rtqeds1k0c"]
+
+[ext_resource type="Script" uid="uid://2de8xdkb6mil" path="res://script/moon_guardian.gd" id="1_moon"]
+[ext_resource type="Texture2D" uid="uid://cwnw51kj4gr27" path="res://asset/PNG/Guardian/Guardian1.png" id="2_wvbkm"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_boss"]
+radius = 16.666666
+
+[node name="MoonGuardian" type="Area2D" unique_id=673908655]
+scale = Vector2(0.3, 0.3)
+collision_layer = 2
+collision_mask = 3
+script = ExtResource("1_moon")
+speed = 60
+hp = 20
+points = 1000
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=780910393]
+texture_filter = 1
+position = Vector2(0.4999962, 0.4999962)
+scale = Vector2(0.08734276, 0.07994792)
+texture = ExtResource("2_wvbkm")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1455363512]
+shape = SubResource("CircleShape2D_boss")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="." unique_id=910055610]
+position = Vector2(0, -60)
+
+[node name="HPLabel" type="Label" parent="." unique_id=903933728]
+offset_left = -20.0
+offset_top = -16.0
+offset_right = 20.0
+offset_bottom = 7.0
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_visible_on_screen_notifier_2d_screen_exited"]

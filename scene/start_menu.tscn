@@ -1,0 +1,107 @@
+[gd_scene format=3 uid="uid://s0pc1j85tsfh"]
+
+[ext_resource type="Script" uid="uid://02g7jbwcuvl1" path="res://script/start_menu.gd" id="1_m4tlu"]
+[ext_resource type="Texture2D" uid="uid://cdv3ee8nld1sm" path="res://asset/UI/AstralBurstTitle.png" id="2_8jbf6"]
+[ext_resource type="Texture2D" uid="uid://6pe4fk12y5eb" path="res://asset/UI/Start.png" id="3_3xx8g"]
+[ext_resource type="Texture2D" uid="uid://cmcksumfcs2iw" path="res://asset/UI/Settings.png" id="4_7vxn0"]
+[ext_resource type="Texture2D" uid="uid://chtl5kdlegj7a" path="res://asset/UI/Quit.png" id="5_2fnc2"]
+[ext_resource type="AudioStream" uid="uid://caovaxxfevdua" path="res://asset/Bonus/sfx_twoTone.ogg" id="6_sfx"]
+
+[node name="StartMenu" type="Control" unique_id=1628539153]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_m4tlu")
+
+[node name="MenuContent" type="Control" parent="." unique_id=1495974233]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Title" type="TextureRect" parent="MenuContent" unique_id=2017226389]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 120.0
+offset_right = 150.0
+offset_bottom = 270.0
+grow_horizontal = 2
+mouse_filter = 2
+texture = ExtResource("2_8jbf6")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Buttons" type="VBoxContainer" parent="MenuContent" unique_id=1682910961]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -50.0
+offset_right = 100.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="PlayButton" type="TextureButton" parent="MenuContent/Buttons" unique_id=1891037080]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+texture_normal = ExtResource("3_3xx8g")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="SettingsButton" type="TextureButton" parent="MenuContent/Buttons" unique_id=2012332429]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+texture_normal = ExtResource("4_7vxn0")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="QuitButton" type="TextureButton" parent="MenuContent/Buttons" unique_id=39934515]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 80)
+layout_mode = 2
+texture_normal = ExtResource("5_2fnc2")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="CountdownTexture" type="TextureRect" parent="." unique_id=1701980045]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -100.0
+offset_right = 100.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CountdownSFX" type="AudioStreamPlayer" parent="." unique_id=1845180224]
+unique_name_in_owner = true
+stream = ExtResource("6_sfx")
+volume_db = -20.0

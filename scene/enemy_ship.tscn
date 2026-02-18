@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://df7jh8p2q5k8"]
+
+[ext_resource type="Script" uid="uid://bhvi5oo1xsf8p" path="res://script/enemy.gd" id="1_ship"]
+[ext_resource type="Shader" uid="uid://bjjc51ltcvy7a" path="res://script/hit_outline.gdshader" id="2_hit"]
+[ext_resource type="Texture2D" uid="uid://c7am8rd6auo70" path="res://asset/PNG/EnemyShip/EnemyShip1.png" id="3_ship"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hit"]
+shader = ExtResource("2_hit")
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ship"]
+radius = 31.0
+height = 80.0
+
+[node name="EnemyShip" type="Area2D" unique_id=1293629930]
+collision_layer = 2
+collision_mask = 3
+script = ExtResource("1_ship")
+type = 6
+speed = 180
+hp = 3
+points = 250
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=593468533]
+material = SubResource("ShaderMaterial_hit")
+position = Vector2(-2.0000036, 3.0000021)
+scale = Vector2(0.06329114, 0.057377048)
+texture = ExtResource("3_ship")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2076712109]
+shape = SubResource("CapsuleShape2D_ship")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="." unique_id=906158850]
+
+[node name="HPLabel" type="Label" parent="." unique_id=944879146]
+offset_left = -19.0
+offset_top = -65.0
+offset_right = 21.0
+offset_bottom = -42.0
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_visible_on_screen_notifier_2d_screen_exited"]

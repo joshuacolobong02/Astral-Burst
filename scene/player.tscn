@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://cv4yph0yjjxff"]
+
+[ext_resource type="Script" uid="uid://c1b8srajeojyh" path="res://script/player.gd" id="1_f1857"]
+[ext_resource type="Texture2D" uid="uid://b0tqgjyme4lfr" path="res://asset/PNG/Effects/fire16.png" id="2_0n5b3"]
+[ext_resource type="Texture2D" uid="uid://cubrqc5nnay74" path="res://asset/PNG/Player.png" id="2_f1857"]
+[ext_resource type="Texture2D" uid="uid://clkk6yv3ehsyt" path="res://asset/PNG/Effects/star1.png" id="4_star"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_engine"]
+particle_flag_disable_z = true
+direction = Vector3(0, 1, 0)
+spread = 10.0
+initial_velocity_min = 100.0
+initial_velocity_max = 200.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.5
+scale_max = 0.8
+color = Color(1, 0.8, 0.4, 1)
+
+[node name="Player" type="CharacterBody2D" unique_id=669998726 groups=["player"]]
+collision_mask = 2
+motion_mode = 1
+script = ExtResource("1_f1857")
+
+[node name="EngineParticles" type="GPUParticles2D" parent="." unique_id=1464422425]
+position = Vector2(0, 38)
+amount = 30
+texture = ExtResource("2_0n5b3")
+lifetime = 0.5
+speed_scale = 1.5
+process_material = SubResource("ParticleProcessMaterial_engine")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=35577028]
+position = Vector2(1, 0)
+scale = Vector2(0.9, 0.9)
+texture = ExtResource("2_f1857")
+
+[node name="PointLight2D" type="PointLight2D" parent="." unique_id=1405850725]
+color = Color(0.364706, 0.654902, 1, 1)
+energy = 0.8
+texture = ExtResource("4_star")
+texture_scale = 1.2
+
+[node name="EngineGlow" type="PointLight2D" parent="." unique_id=1338691145]
+position = Vector2(0, 38)
+color = Color(1, 0.615686, 0.188235, 1)
+energy = 1.5
+texture = ExtResource("4_star")
+texture_scale = 0.5
+
+[node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="." unique_id=955036775]
+polygon = PackedVector2Array(-3, -40, 4, -40, 8, -14, 10, -13, 11, -11, 13, 12, 25, 16, 46, 14, 46, 2, 50, 1, 50, 14, 51, 30, 24, 41, 9, 43, -3, 43, -15, 41, -48, 33, -48, 15, -48, 0, -45, 1, -44, 14, -24, 15, -9, 9, -7, -14)
+
+[node name="Muzzle" type="Marker2D" parent="." unique_id=1495426294]
+position = Vector2(0, -36)

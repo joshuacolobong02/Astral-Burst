@@ -1,0 +1,36 @@
+[gd_scene format=3 uid="uid://bf8bwipfysoba"]
+
+[ext_resource type="Script" uid="uid://b3eof3dpd6emp" path="res://script/boss_behavior.gd" id="1_ura"]
+[ext_resource type="Texture2D" uid="uid://pq7tbl7x12u" path="res://asset/PNG/Guardian/Guardian6.png" id="2_ura"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_boss"]
+radius = 32.0
+
+[node name="UranusBoss" type="Area2D" unique_id=155055475]
+scale = Vector2(0.75, 0.75)
+collision_layer = 2
+collision_mask = 3
+script = ExtResource("1_ura")
+speed = 50
+hp = 60
+points = 2000
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=962189545]
+scale = Vector2(0.11, 0.11)
+texture = ExtResource("2_ura")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1596705254]
+shape = SubResource("CircleShape2D_boss")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="." unique_id=1039362136]
+
+[node name="HPLabel" type="Label" parent="." unique_id=1970529085]
+offset_left = -20.0
+offset_top = -16.0
+offset_right = 20.0
+offset_bottom = 7.0
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_visible_on_screen_notifier_2d_screen_exited"]

@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=3 uid="uid://bossmeteor123"]
+
+[ext_resource type="Script" uid="uid://bhvi5oo1xsf8p" path="res://script/enemy.gd" id="1_wvbkm"]
+[ext_resource type="Texture2D" uid="uid://cwnw51kj4gr27" path="res://asset/PNG/Guardian/Guardian1.png" id="2_wvbkm"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_boss"]
+radius = 18.408936
+
+[node name="GuardianOfMmoon" type="Area2D"]
+scale = Vector2(3, 3)
+collision_layer = 2
+script = ExtResource("1_wvbkm")
+speed = 50
+hp = 15
+points = 500
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture_filter = 1
+position = Vector2(3.8146973e-06, 1.1920929e-06)
+scale = Vector2(0.080677435, 0.07868522)
+texture = ExtResource("2_wvbkm")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_boss")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]
+position = Vector2(0, 6.4074993e-07)
+
+[node name="HPLabel" type="Label" parent="."]
+offset_left = -20.666666
+offset_top = -16.666668
+offset_right = 19.333334
+offset_bottom = 6.333332
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_visible_on_screen_notifier_2d_screen_exited"]

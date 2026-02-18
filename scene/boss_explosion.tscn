@@ -1,0 +1,43 @@
+[gd_scene format=3 uid="uid://clfnfiqw3jyjs"]
+
+[ext_resource type="Texture2D" uid="uid://dtkrltvwd8ahx" path="res://asset/PNG/Effects/BossExplosion.png" id="1_tex"]
+[ext_resource type="Script" uid="uid://dsqfnekf0cpxg" path="res://script/explode_animate.gd" id="2_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p6ux1"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 0, 437, 448)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cqrsw"]
+atlas = ExtResource("1_tex")
+region = Rect2(437, 0, 437, 448)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r0h5k"]
+atlas = ExtResource("1_tex")
+region = Rect2(874, 0, 437, 448)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_boss"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p6ux1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cqrsw")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r0h5k")
+}],
+"loop": true,
+"name": &"Explosion_boss",
+"speed": 5.0
+}]
+
+[node name="BossExplosion" type="Node2D" unique_id=320774755]
+script = ExtResource("2_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1753115912]
+position = Vector2(-1, -2.0000076)
+scale = Vector2(0.4839817, 0.46205357)
+sprite_frames = SubResource("SpriteFrames_boss")
+animation = &"Explosion_boss"
+autoplay = "Explosion_boss"

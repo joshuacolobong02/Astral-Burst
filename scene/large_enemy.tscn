@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3 uid="uid://fpurfcrr3bxb"]
+
+[ext_resource type="PackedScene" uid="uid://7fhdvrero4mu" path="res://scene/enemy.tscn" id="1_w1kyf"]
+[ext_resource type="Texture2D" uid="uid://btkc8la2o7qh3" path="res://asset/PNG/Meteors/MeteorYellow5.png" id="2_w1kyf"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_jdx5x"]
+radius = 19.235384
+
+[node name="LargeEnemy" instance=ExtResource("1_w1kyf")]
+speed = 75
+hp = 5
+points = 300
+
+[node name="Sprite2D" parent="." index="0"]
+texture = ExtResource("2_w1kyf")
+
+[node name="CollisionShape2D" parent="." index="1"]
+shape = SubResource("CircleShape2D_jdx5x")

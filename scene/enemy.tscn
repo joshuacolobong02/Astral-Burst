@@ -1,0 +1,45 @@
+[gd_scene load_steps=6 format=3 uid="uid://7fhdvrero4mu"]
+
+[ext_resource type="Script" uid="uid://bhvi5oo1xsf8p" path="res://script/enemy.gd" id="1_f87vc"]
+[ext_resource type="Shader" uid="uid://bjjc51ltcvy7a" path="res://script/hit_outline.gdshader" id="2_hit"]
+[ext_resource type="Texture2D" uid="uid://bg14b4wa407c1" path="res://asset/PNG/Meteors/MeteorRed2.png" id="2_f87vc"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hit"]
+shader = ExtResource("2_hit")
+shader_parameter/outline_color = Color(1, 1, 1, 1)
+shader_parameter/outline_width = 0.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_h08p8"]
+radius = 14.0
+
+[node name="Enemy" type="Area2D"]
+collision_layer = 2
+collision_mask = 3
+script = ExtResource("1_f87vc")
+speed = 120
+hp = 2
+points = 125
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+material = SubResource("ShaderMaterial_hit")
+position = Vector2(-0.4518158, -0.3248274)
+rotation = 3.1415927
+scale = Vector2(0.18873453, 0.20363025)
+texture = ExtResource("2_f87vc")
+region_rect = Rect2(0, 200, 0, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_h08p8")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="."]
+
+[node name="HPLabel" type="Label" parent="."]
+offset_left = -19.0
+offset_top = -10.0
+offset_right = 21.0
+offset_bottom = 13.0
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_visible_on_screen_notifier_2d_screen_exited"]

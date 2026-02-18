@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://ckhrbnrwncoq1"]
+
+[ext_resource type="PackedScene" uid="uid://7fhdvrero4mu" path="res://scene/enemy.tscn" id="1_basic"]
+[ext_resource type="Script" uid="uid://c74lqnp2xk71s" path="res://script/moon_enemy.gd" id="2_moon"]
+[ext_resource type="Texture2D" uid="uid://pq7tbl7x12u" path="res://asset/PNG/Guardian/Guardian6.png" id="3_ura"]
+
+[node name="UranusGuardianOrbital" unique_id=1972463843 instance=ExtResource("1_basic")]
+script = ExtResource("2_moon")
+orbit_radius = 150.0
+orbit_speed = 2.6
+type = 1
+speed = 130
+hp = 6
+points = 100
+
+[node name="Sprite2D" parent="." index="0"]
+scale = Vector2(0.1, 0.1)
+texture = ExtResource("3_ura")
+flip_v = true

@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://c20gaq0e8q3pu"]
+
+[ext_resource type="PackedScene" uid="uid://7fhdvrero4mu" path="res://scene/enemy.tscn" id="1_basic"]
+[ext_resource type="Script" uid="uid://c74lqnp2xk71s" path="res://script/moon_enemy.gd" id="2_moon"]
+[ext_resource type="Texture2D" uid="uid://d1l3mo86p00kb" path="res://asset/PNG/Guardian/Guardian8.png" id="3_sca"]
+
+[node name="ScatteredGuardianOrbital" unique_id=1046959482 instance=ExtResource("1_basic")]
+script = ExtResource("2_moon")
+orbit_radius = 170.0
+orbit_speed = 3.0
+type = 1
+speed = 150
+hp = 8
+points = 100
+
+[node name="Sprite2D" parent="." index="0"]
+position = Vector2(0, 0)
+scale = Vector2(0.068507716, 0.06700916)
+texture = ExtResource("3_sca")
+flip_v = true

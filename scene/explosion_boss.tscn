@@ -1,0 +1,59 @@
+[gd_scene format=3 uid="uid://bhcgy7xm1kp24"]
+
+[ext_resource type="Texture2D" uid="uid://dtkrltvwd8ahx" path="res://asset/PNG/Effects/BossExplosion.png" id="1_tex"]
+[ext_resource type="Script" uid="uid://dsqfnekf0cpxg" path="res://script/explode_animate.gd" id="2_script"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 0, 437, 448)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2"]
+atlas = ExtResource("1_tex")
+region = Rect2(438, 0, 437, 448)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3"]
+atlas = ExtResource("1_tex")
+region = Rect2(876, 0, 437, 448)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_boss"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3")
+}],
+"loop": false,
+"name": &"explosion_boss",
+"speed": 10.0
+}]
+
+[sub_resource type="Gradient" id="Gradient_boss"]
+offsets = PackedFloat32Array(0, 0.28, 0.65, 1)
+colors = PackedColorArray(1, 1, 1, 1, 1, 0.8, 0.2, 1, 0.8, 0.2, 0.1, 1, 0.2, 0.0, 0.0, 0)
+
+[node name="ExplosionBoss" type="Node2D" unique_id=1034909684]
+script = ExtResource("2_script")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=345158545]
+sprite_frames = SubResource("SpriteFrames_boss")
+animation = &"explosion_boss"
+autoplay = "explosion_boss"
+
+[node name="Sparks" type="CPUParticles2D" parent="."]
+emitting = false
+amount = 150
+one_shot = true
+explosiveness = 0.9
+lifetime = 1.5
+spread = 180.0
+gravity = Vector2(0, 0)
+initial_velocity_min = 200.0
+initial_velocity_max = 500.0
+scale_amount_min = 4.0
+scale_amount_max = 12.0
+color_ramp = SubResource("Gradient_boss")
