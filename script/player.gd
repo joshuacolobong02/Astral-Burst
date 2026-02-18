@@ -1,13 +1,12 @@
 class_name Player extends CharacterBody2D
 
-signal laser_shot(laser_scene, location)
+signal laser_shot(laser_scene: PackedScene, position: Vector2, speed_mult: float)
 signal killed
 signal boost_collected(type: BoostManager.BoostType)
 signal boost_expired(type: BoostManager.BoostType)
 
 @onready var player_spawn_pos = $"../PlayerSpawnPos"
-@onready var muzzle = $Muzzle 
-@onready var laser_container = $"../LaserContainer"
+@onready var muzzle = $Muzzle
 @onready var laser_sound = $"../SFX/LaserSound"
 @onready var sprite = $Sprite2D
 
@@ -34,6 +33,7 @@ var _invincible_timer := 0.0
 var _flash_timer := 0.0
 
 var _last_drag_relative := Vector2.ZERO
+const TOUCH_DELTA_CLAMP := 800.0  # Prevents velocity spikes from frame hitches
 
 func _ready():
 	add_to_group("player")
@@ -85,6 +85,14 @@ func _remove_boost(type: BoostManager.BoostType):
 			var t = create_tween()
 			t.tween_property(shield_sprite, "modulate:a", 0.0, 0.3)
 
+func has_laser_boost_active() -> bool:
+	return _active_boosts.has(BoostManager.BoostType.LASER_UPGRADE)
+
+func get_laser_boost_remaining() -> float:
+	if !_active_boosts.has(BoostManager.BoostType.LASER_UPGRADE):
+		return 0.0
+	return _active_boosts[BoostManager.BoostType.LASER_UPGRADE]
+
 func make_invincible(duration: float):
 	is_invincible = true
 	_invincible_timer = duration
@@ -119,26 +127,23 @@ func _process(delta):
 		_fire_timer = interval
 
 func shoot():
-	_spawn_laser(muzzle.global_position)
-	if _active_boosts.has(BoostManager.BoostType.LASER_UPGRADE):
-		_spawn_laser(muzzle.global_position + Vector2(-30, 10))
-		_spawn_laser(muzzle.global_position + Vector2(30, 10))
-		_spawn_laser(muzzle.global_position + Vector2(-60, 25))
-		_spawn_laser(muzzle.global_position + Vector2(60, 25))
+	var positions: Array[Vector2] = []
+	positions.append(muzzle.global_position)
+	if has_laser_boost_active():
+		positions.append(muzzle.global_position + Vector2(-30, 10))
+		positions.append(muzzle.global_position + Vector2(30, 10))
+		positions.append(muzzle.global_position + Vector2(-60, 25))
+		positions.append(muzzle.global_position + Vector2(60, 25))
 	else:
-		_spawn_laser(muzzle.global_position + Vector2(-25, 15))
-		_spawn_laser(muzzle.global_position + Vector2(25, 15))
-
-func _spawn_laser(pos):
-	var laser = laser_scene.instantiate()
-	laser.global_position = pos
-	if "speed" in laser:
-		laser.speed *= _laser_speed_mult
-	laser_container.add_child(laser)
-	if laser_sound and !laser_sound.playing: laser_sound.play()
+		positions.append(muzzle.global_position + Vector2(-25, 15))
+		positions.append(muzzle.global_position + Vector2(25, 15))
+	for pos in positions:
+		laser_shot.emit(laser_scene, pos, _laser_speed_mult)
+	if laser_sound and !laser_sound.playing:
+		laser_sound.play()
 
 func take_hit():
-	if is_invincible or is_dying: return
+	if is_invincible or is_dying or god_mode: return
 	if has_shield: return 
 	die()
 
@@ -148,7 +153,8 @@ func _physics_process(delta):
 	if touch_active:
 		var drag_move = _last_drag_relative
 		_last_drag_relative = Vector2.ZERO
-		velocity = drag_move / delta
+		if delta > 0:
+			velocity = (drag_move / delta).limit_length(TOUCH_DELTA_CLAMP)
 		global_position += drag_move
 	else:
 		var direction = Vector2(Input.get_axis("left", "right"), Input.get_axis("up", "down")).normalized()
@@ -162,7 +168,7 @@ func _physics_process(delta):
 	global_position = global_position.clamp(Vector2.ZERO, get_viewport_rect().size)
 
 func die():
-	if is_dying: return
+	if is_dying or god_mode: return
 	_active_boosts.clear()
 	_laser_speed_mult = 1.0
 	has_shield = false

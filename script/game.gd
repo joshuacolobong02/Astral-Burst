@@ -80,11 +80,12 @@ var moon_enemy_2 = preload("res://scene/enemy_2.tscn")
 var enemy_ship_scene = preload("res://scene/enemy_ship.tscn")
 var meteor_projectile_scene = preload("res://scene/meteor_projectile.tscn")
 
-# Powerups
-var laser_boost_scene 
-var shield_boost_scene 
-var coin_boost_scene 
-var speed_boost_scene 
+# Powerups (loaded at runtime to avoid preload/parse-time failures)
+var laser_boost_scene: PackedScene
+var shield_boost_scene: PackedScene
+var coin_boost_scene: PackedScene
+var speed_boost_scene: PackedScene
+var boost_bag_scene: PackedScene
 
 var fleet_controller: Node2D = null
 var powerup_container: Node2D = null
@@ -160,11 +161,11 @@ func _ready():
 	for p in _planet_layers_config:
 		p.layer.motion_scale = Vector2.ZERO
 	
-	laser_boost_scene = load("res://scene/laser_boost.tscn")
-	shield_boost_scene = load("res://scene/shield_boost.tscn")
-	coin_boost_scene = load("res://scene/coin_boost.tscn")
-	speed_boost_scene = load("res://scene/speed_boost.tscn")
-
+	laser_boost_scene = _load_boost_scene("res://scene/laser_boost.tscn")
+	shield_boost_scene = _load_boost_scene("res://scene/shield_boost.tscn")
+	coin_boost_scene = _load_boost_scene("res://scene/coin_boost.tscn")
+	speed_boost_scene = _load_boost_scene("res://scene/speed_boost.tscn")
+	boost_bag_scene = _load_boost_scene("res://scene/boost_bag.tscn")
 	_warm_up_resources()
 	
 	var save_file = FileAccess.open("user://save.data", FileAccess.READ)
@@ -194,16 +195,16 @@ func _ready():
 	fleet_controller = Node2D.new(); fleet_controller.set_script(load("res://script/fleet_controller.gd"))
 	fleet_controller.name = "FleetController"; add_child(fleet_controller)
 	
-	powerup_container = Node2D.new(); powerup_container.name = "PowerupContainer"; add_child(powerup_container)
+	powerup_container = Node2D.new(); powerup_container.name = "PowerupContainer"; powerup_container.z_index = 100; add_child(powerup_container)
 	
 	# INITIALIZE BOOST MANAGER
 	boost_manager = BoostManager.new()
 	boost_manager.set_script(load("res://script/boost_manager.gd"))
-	boost_manager.laser_boost_scene = load("res://scene/laser_boost.tscn")
-	boost_manager.shield_boost_scene = load("res://scene/shield_boost.tscn")
-	boost_manager.speed_boost_scene = load("res://scene/speed_boost.tscn")
+	boost_manager.laser_boost_scene = laser_boost_scene
+	boost_manager.shield_boost_scene = shield_boost_scene
+	boost_manager.speed_boost_scene = speed_boost_scene
+	boost_manager.boost_bag_scene = boost_bag_scene
 	add_child(boost_manager)
-	boost_manager.setup(player, powerup_container)
 	
 	timer.one_shot = true
 
@@ -246,8 +247,8 @@ func _process(delta):
 			formation_stage = 0 # Reset stage when cleared
 			_start_wave_gap()
 	
-	if player and is_instance_valid(player) and player._active_boosts.has(BoostManager.BoostType.LASER_UPGRADE):
-		hud.show_laser_boost(player._active_boosts[BoostManager.BoostType.LASER_UPGRADE], 20.0)
+	if player and is_instance_valid(player) and player.has_laser_boost_active():
+		hud.show_laser_boost(player.get_laser_boost_remaining(), 20.0)
 	else:
 		hud.hide_laser_boost()
 		
@@ -333,6 +334,12 @@ func reset_game_state():
 	if death_blur: death_blur.visible = false
 	if death_flash: death_flash.visible = false
 
+func _load_boost_scene(path: String) -> PackedScene:
+	var s = load(path) as PackedScene
+	if !s:
+		push_error("Failed to load boost scene: " + path)
+	return s
+
 func _warm_up_resources():
 	var scenes_to_warm = [
 		laser_scene, basic_enemy_scene, diver_enemy_scene, large_enemy_scene, moon_enemy_1, moon_enemy_2,
@@ -375,19 +382,20 @@ func _on_start_game():
 	game_started = true; hud.visible = true
 	if music_manager: music_manager.play_music(); music_manager.set_intensity(0.0)
 	timer.start(); player.set_process(true); player.set_physics_process(true)
-	_spawn_boost_at_top(laser_boost_scene); get_tree().create_timer(30.0).timeout.connect(_on_repeating_boost_timeout)
+	if boost_manager:
+		boost_manager.setup(player, powerup_container)
+		boost_manager.start_cycle()
 
-func _on_repeating_boost_timeout():
-	if not game_started: return
-	_spawn_boost_at_top(laser_boost_scene); get_tree().create_timer(30.0).timeout.connect(_on_repeating_boost_timeout)
-
-func _on_player_laser_shot(_scene, pos):
-	var laser
-	if _laser_pool.size() > 0: laser = _laser_pool.pop_back(); laser.reset(pos)
+func _on_player_laser_shot(_scene: PackedScene, pos: Vector2, speed_mult: float = 1.0):
+	var laser: Node
+	if _laser_pool.size() > 0:
+		laser = _laser_pool.pop_back()
+		laser.reset(pos, speed_mult)
 	else:
-		laser = laser_scene.instantiate(); laser.destroyed.connect(_on_laser_destroyed)
-		laser_container.add_child(laser); laser.reset(pos)
-	if player and player.laser_sound and player.visible: player.laser_sound.play()
+		laser = laser_scene.instantiate()
+		laser.destroyed.connect(_on_laser_destroyed)
+		laser_container.add_child(laser)
+		laser.reset(pos, speed_mult)
 
 func _on_laser_destroyed(laser):
 	if not _laser_pool.has(laser): _laser_pool.append(laser)
@@ -427,7 +435,7 @@ func transition_to_stage(new_stage):
 			tween.tween_property(target_sprite, "modulate:a", final_modulate, 1.0); target_sprite.position = Vector2.ZERO
 	await get_tree().create_timer(5.0).timeout
 	_is_transitioning = false; spawn_boss()
-	# if player and is_instance_valid(player): player.upgrade_fire_rate()
+	if player and is_instance_valid(player): player.upgrade_fire_rate()
 
 func spawn_boss():
 	boss_spawned = true; var target_speed = 600.0; var tween = create_tween()
@@ -643,7 +651,8 @@ func spawn_meteor_formation(type: String):
 			for i in range(6):
 				var angle = i * (TAU / 6.0)
 				var target_pos = center + Vector2(cos(angle), sin(angle)) * 140.0
-				var start_pos = Vector2(target_pos.x > view_size.x/2 if view_size.x + 100 else -100, target_pos.y)
+				var start_x = view_size.x + 100 if target_pos.x > view_size.x / 2 else -100
+				var start_pos = Vector2(start_x, target_pos.y)
 				var s = _spawn_ship(start_pos)
 				if s: 
 					s.type = BaseEnemy.Type.STATIONARY; s.hp = 3
@@ -713,29 +722,42 @@ func _spawn_single_meteor(pos: Vector2, speed_override: float = 0.0) -> MeteorPr
 
 func shake_camera(intensity: float, duration: float):
 	if !camera: return
-	var shake_tween = create_tween(); shake_tween.tween_method(func(v): 
-		var damp = v / intensity
-		camera.offset = Vector2(randf_range(-v, v), randf_range(-v, v)) * damp, intensity, 0.0, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	var damp_fn = func(v): 
+		var damp = v / intensity if intensity > 0 else 0.0
+		camera.offset = Vector2(randf_range(-v, v), randf_range(-v, v)) * damp
+	var shake_tween = create_tween()
+	shake_tween.tween_method(damp_fn, intensity, 0.0, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	shake_tween.tween_callback(func(): camera.offset = Vector2.ZERO)
 
-func _on_enemy_killed(points, pos):
-	var explosion
-	if points >= 500: explosion = explosion_boss_scene.instantiate(); explosion.scale = Vector2(0.7, 0.7); shake_camera(10.0, 0.5)
-	else: explosion = explosion_scene.instantiate(); shake_camera(2.0, 0.1)
-	explosion.global_position = pos; add_child(explosion); explode_sound.play()
+func _on_enemy_killed(points: int, pos: Vector2):
+	# Defer scene changes to avoid "Can't change state while flushing queries"
+	call_deferred("_apply_enemy_killed", points, pos)
+
+func _apply_enemy_killed(points: int, pos: Vector2):
+	var explosion: Node2D
+	if points >= 500:
+		explosion = explosion_boss_scene.instantiate()
+		explosion.scale = Vector2(0.7, 0.7)
+		shake_camera(10.0, 0.5)
+	else:
+		explosion = explosion_scene.instantiate()
+		shake_camera(2.0, 0.1)
+	explosion.global_position = pos
+	add_child(explosion)
+	explode_sound.play()
 	
-	# Use self. to trigger setter
 	self.score += points
 	
-	# RANDOM ENEMY DROPS REMOVED: BoostManager handles all timered power-ups.
-	# We only keep Coin drops from enemies for score balancing.
-	if coin_boost_scene and randf() < 0.15: 
+	if coin_boost_scene and randf() < 0.15:
 		var pu = coin_boost_scene.instantiate()
-		powerup_container.add_child(pu); pu.global_position = pos
+		powerup_container.add_child(pu)
+		pu.global_position = pos
 
-	if points >= 500: 
-		boss_spawned = false; var normal_speed = 600.0; var tween = create_tween()
-		tween.tween_property(self, "scroll_speed", normal_speed, 2.0); spawn_minions(pos)
+	if points >= 500:
+		boss_spawned = false
+		var tween = create_tween()
+		tween.tween_property(self, "scroll_speed", 600.0, 2.0)
+		spawn_minions(pos)
 
 func _on_enemy_hit(): hit_sound.play()
 

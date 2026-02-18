@@ -23,6 +23,7 @@ static var hit_shader_res = preload("res://script/hit_outline.gdshader")
 static var shared_hit_mat: ShaderMaterial
 var current_hit_tween: Tween
 var _base_scale: Vector2
+var _sprite_base_pos: Vector2
 
 # Seeker & Shooting logic
 var velocity: Vector2 = Vector2.ZERO
@@ -37,6 +38,7 @@ func _ready():
 	
 	if sprite:
 		_base_scale = sprite.scale
+		_sprite_base_pos = sprite.position
 	
 	_apply_hit_shader()
 	
@@ -178,10 +180,9 @@ func _physics_process(delta):
 			ai_shoot_timer = ai_shoot_interval
 			
 	var hit_running = current_hit_tween != null and current_hit_tween.is_running()
-	if type == Type.STATIONARY and !is_dead and !hit_running:
-		var bob_offset = sin(Time.get_ticks_msec() * 0.003 + get_instance_id()) * 0.5
-		if sprite:
-			sprite.position.y += bob_offset * delta * 60.0
+	if type == Type.STATIONARY and !is_dead and !hit_running and sprite:
+		var bob_offset = sin(Time.get_ticks_msec() * 0.003 + get_instance_id()) * 2.0
+		sprite.position.y = _sprite_base_pos.y + bob_offset
 
 func shoot():
 	if is_dead or is_spawning: return
@@ -215,6 +216,9 @@ func _on_body_entered(body):
 			body.take_hit()
 		else:
 			body.die()
+		if !is_dead:
+			is_dead = true
+			killed.emit(points, global_position)
 		die()
 
 func take_damage(amount):

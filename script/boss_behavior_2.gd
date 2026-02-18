@@ -3,8 +3,12 @@ extends BaseEnemy
 @export var enter_speed = 100
 @export var settle_y = 250
 
+const BOSS_MARGIN := 70.0
+const ROAM_Y_MAX_RATIO := 0.5
+
 # Movement
 var target_pos: Vector2
+var _bounds: Rect2
 var time_passed: float = 0.0
 var roam_radius = Vector2(140.0, 60.0)
 var roam_speed = 1.0
@@ -51,13 +55,29 @@ func _ready():
 	
 	$CollisionShape2D.set_deferred("disabled", true)
 	
+	add_to_group("boss")
+	_update_bounds()
+	settle_y = clampf(settle_y, _bounds.position.y + 50.0, _bounds.end.y - 50.0)
+	roam_radius.x = minf(roam_radius.x, (_bounds.end.x - _bounds.position.x) * 0.5)
+	roam_radius.y = minf(roam_radius.y, (_bounds.end.y - _bounds.position.y) * 0.4)
 	var formation = get_node_or_null("EscortFormation")
 	if formation:
+		protectors_alive = formation.get_child_count()
 		for child in formation.get_children():
-			if child is BaseEnemy:
+			if not child.tree_exited.is_connected(_on_protector_died):
 				child.tree_exited.connect(_on_protector_died)
-				
+	
 	reset_shoot_timer()
+
+func _update_bounds():
+	var vs = get_viewport_rect().size
+	_bounds = Rect2(BOSS_MARGIN, BOSS_MARGIN, vs.x - BOSS_MARGIN * 2.0, vs.y * ROAM_Y_MAX_RATIO)
+
+func _clamp_to_bounds(pos: Vector2) -> Vector2:
+	return Vector2(
+		clampf(pos.x, _bounds.position.x, _bounds.end.x),
+		clampf(pos.y, _bounds.position.y, _bounds.end.y)
+	)
 
 func _physics_process(delta):
 	if _is_dying: return
@@ -69,12 +89,13 @@ func _physics_process(delta):
 	if !has_settled:
 		if abs(global_position.y - settle_y) > 5.0:
 			global_position.y = lerp(global_position.y, float(settle_y), delta * 2.0)
+			global_position = _clamp_to_bounds(global_position)
 			if sprite:
 				sprite.visible = true
 				sprite.modulate.a = move_toward(sprite.modulate.a, 1.0, delta * 0.5)
 				sprite.scale = sprite.scale.move_toward(target_sprite_scale, delta * 0.2)
 		else:
-			global_position.y = settle_y
+			global_position = _clamp_to_bounds(Vector2(global_position.x, settle_y))
 			has_settled = true
 			target_pos = global_position
 			if sprite:
@@ -87,13 +108,14 @@ func _physics_process(delta):
 		var hit_running = current_hit_tween != null and current_hit_tween.is_running()
 		var shoot_running = active_shoot_tween != null and active_shoot_tween.is_running()
 		
-		# ROAMING MOVEMENT
+		# ROAMING MOVEMENT (clamped to playable bounds)
 		if !shoot_running:
+			var center_x = _bounds.get_center().x
 			var speed_mod = 2.5 if is_desperate else 1.0
-			var x_limit = 201.0 + (sin(time_passed * roam_speed * 0.4) * roam_radius.x)
+			var x_limit = center_x + (sin(time_passed * roam_speed * 0.4) * roam_radius.x)
 			var y_limit = settle_y + (cos(time_passed * roam_speed * 0.7) * roam_radius.y)
-			var target = Vector2(x_limit, y_limit)
-			global_position = global_position.lerp(target, delta * roam_speed * speed_mod)
+			var target = _clamp_to_bounds(Vector2(x_limit, y_limit))
+			global_position = _clamp_to_bounds(global_position.lerp(target, delta * roam_speed * speed_mod))
 		
 		if !protected_phase and !hit_running and !shoot_running:
 			var pulse_speed = 4.0 if is_desperate else 2.0
@@ -116,6 +138,8 @@ func _physics_process(delta):
 func _enter_desperation_phase():
 	is_desperate = true
 	roam_radius *= 1.4
+	roam_radius.x = minf(roam_radius.x, (_bounds.end.x - _bounds.position.x) * 0.5)
+	roam_radius.y = minf(roam_radius.y, (_bounds.end.y - _bounds.position.y) * 0.4)
 	shoot_interval *= 0.7
 	
 	var scene = get_tree().current_scene
@@ -142,8 +166,8 @@ func spawn_second_wave():
 	if current_wave == 2 or is_dead or _is_dying: return 
 	current_wave = 2
 	protectors_alive = 8 
-	
-	var radius = 250.0
+	var max_r = minf(_bounds.end.x - _bounds.position.x, _bounds.end.y - _bounds.position.y) * 0.45
+	var radius = minf(250.0, max_r)
 	for i in range(8):
 		var angle = i * (TAU / 8.0)
 		var pos = Vector2(cos(angle), sin(angle)) * radius
@@ -305,6 +329,12 @@ func spawn_thrown_protector(index, angle):
 		if is_instance_valid(proj):
 			proj.scale = final_proj_scale
 	)
+
+func _on_visible_on_screen_notifier_2d_screen_exited():
+	if !is_dead and !_is_dying:
+		is_dead = true
+		killed.emit(points, global_position)
+	super._on_visible_on_screen_notifier_2d_screen_exited()
 
 func die():
 	if _is_dying: return

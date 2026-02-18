@@ -1,8 +1,6 @@
-# Astral Burst — Game Documentation
+# Astral Burst - Game Documentation
 
 **Astral Burst** is a high-octane Godot 4.x space shooter. Players pilot a starship through various celestial stages, engaging in combat with enemy formations and bosses while navigating complex meteor hazards.
-
-> **Related docs:** [README.md](README.md) | [Architecture](docs/architecture-diagram.md) | [Improvement Report](docs/IMPROVEMENT_REPORT.md)
 
 ---
 
@@ -37,7 +35,7 @@
 | **Bosses**          | 500+           | Triggers 0.05x time-scale cinematic and heavy camera shake. |
 | **Guardians**       | 100            | Includes orbital and infinity-pattern enemies.              |
 | **Coins**           | 500            | Collected via the Gold Power-up.                            |
-| **Meteors/Minions** | 0 / 50         | Most meteors: 0 pts; minion ships: 50 pts.                 |
+| **Meteors/Minions** | 0/50           | Mostly hazards; some meteors award minor points.            |
 
 - **High Scores:** High scores are persisted locally in `user://save.data`.
 
@@ -63,13 +61,15 @@ Progression is linked to the player's total score. Reaching a milestone triggers
 
 ### Structured Meteor Formations
 
-The game features five distinct meteor patterns that spawn dynamically (25% chance per wave):
+The game cycles through a wave sequence of formations including:
 
 - **V-Formation:** A 5-meteor arrowhead.
 - **Circle:** 10 meteors falling in a synchronized ring.
 - **Wave:** 8 meteors following a serpentine sine-wave path with synchronized `phase_offset` for a "snake" effect.
 - **Diagonal Rain:** Staggered meteors sweeping the screen at a 45-degree angle.
 - **Spiral:** A 12-meteor winding sequence spawning from the center.
+
+Wave patterns (V, Diamond, Squad, X_PATTERN, Circle, etc.) rotate deterministically via `WAVE_SEQUENCE`.
 
 ### Enemy Behaviors
 
@@ -82,7 +82,7 @@ The game features five distinct meteor patterns that spawn dynamically (25% chan
 
 ## 4. Power-up System
 
-Power-ups drop from destroyed enemies (40% chance) or appear during wave gaps.
+Power-ups spawn on timers (BoostManager) and during wave gaps. Coins drop from destroyed enemies (15% chance). Laser, Shield, and Speed boosts are spawned by BoostManager based on game state.
 
 ### Power-up Types
 
@@ -130,6 +130,7 @@ All power-ups feature high-visibility enhancements:
 
 - `left`/`right`/`up`/`down`: Directional movement.
 - `shoot`: Manual fire (Spacebar).
+- `pause`: Pause game (P key).
 - `reset`: Reload current scene (Shift+R).
 - `quit`: Close application (Esc).
 
@@ -145,6 +146,7 @@ All power-ups feature high-visibility enhancements:
 
 - **Godot 4 Setters:** Internal variable assignments to `score` or `lives` in `game.gd` must use the `self.` prefix (e.g., `self.score += 100`) to ensure the HUD update logic is triggered.
 - **Power-up Container:** Power-ups must be added to the `PowerupContainer` node to ensure they fall at a consistent speed independent of ParallaxBackground scaling.
+- **Laser Pooling:** Player emits `laser_shot(scene, position, speed_mult)`; `game.gd` spawns lasers via pool. Lasers use `reset(pos, speed_mult)` to apply player speed multipliers correctly.
 
 ### Rendering
 

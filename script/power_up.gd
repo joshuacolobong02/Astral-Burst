@@ -1,12 +1,15 @@
 extends Area2D
 
 # Unified with BoostManager for clean scalability
+signal despawned  # Emitted when boost leaves screen without being collected
+
 @export var boost_type: BoostManager.BoostType = BoostManager.BoostType.LASER_UPGRADE
 @export var is_coin: bool = false # Special case for score-only pickups
 @export var speed: float = 260.0 
 
-var boost_sound = load("res://asset/Bonus/BoostCollect.ogg")
-var coin_sound = load("res://asset/Bonus/CoinCollect.ogg")
+var boost_sound = preload("res://asset/Bonus/BoostCollect.ogg")
+var coin_sound = preload("res://asset/Bonus/CoinCollect.ogg")
+var _collected := false
 
 func _ready():
 	# Entry Animation
@@ -52,28 +55,38 @@ func _get_type_color() -> Color:
 		BoostManager.BoostType.LASER_UPGRADE: return Color(0.2, 0.5, 1.0, 1.0) # Blue
 		BoostManager.BoostType.LASER_SPEED: return Color(1.0, 0.3, 0.1, 1.0) # Orange/Red
 		BoostManager.BoostType.SHIELD: return Color(0.2, 1.0, 0.2, 1.0) # Green
+		BoostManager.BoostType.BOOST_BAG: return Color(0.9, 0.4, 0.9, 1.0) # Purple gift
 	return Color.WHITE
 
 func _process(delta):
 	global_position.y += speed * delta
-	if global_position.y > 1100: queue_free()
+	if global_position.y > 1100:
+		if !_collected and !is_coin:
+			despawned.emit()
+		queue_free()
 
 func _on_body_entered(body):
 	if body.is_in_group("player"):
-		if is_coin:
-			if get_tree().current_scene.has_method("add_score"):
-				get_tree().current_scene.add_score(500)
-			_play_sound(coin_sound)
-		else:
-			body.apply_boost(boost_type, 20.0)
-			_play_sound(boost_sound)
-		
-		# Feedback and cleanup
-		set_deferred("monitoring", false)
-		var ct = create_tween().set_parallel(true)
-		ct.tween_property(self, "scale", Vector2(3.0, 3.0), 0.2)
-		ct.tween_property(self, "modulate:a", 0.0, 0.2)
-		ct.chain().tween_callback(queue_free)
+		call_deferred("_do_collect", body)
+
+func _do_collect(body: Node):
+	if _collected or !is_instance_valid(body): return
+	_collected = true
+	set_deferred("monitoring", false)
+	if is_coin:
+		if get_tree().current_scene.has_method("add_score"):
+			get_tree().current_scene.add_score(500)
+		_play_sound(coin_sound)
+	else:
+		var apply_type = boost_type
+		if boost_type == BoostManager.BoostType.BOOST_BAG:
+			apply_type = [BoostManager.BoostType.LASER_UPGRADE, BoostManager.BoostType.LASER_SPEED, BoostManager.BoostType.SHIELD].pick_random()
+		body.apply_boost(apply_type, 20.0)
+		_play_sound(boost_sound)
+	var ct = create_tween().set_parallel(true)
+	ct.tween_property(self, "scale", Vector2(3.0, 3.0), 0.2)
+	ct.tween_property(self, "modulate:a", 0.0, 0.2)
+	ct.chain().tween_callback(queue_free)
 
 func _play_sound(stream):
 	if stream:
