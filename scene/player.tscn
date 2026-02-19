@@ -44,6 +44,7 @@ texture_scale = 1.2
 position = Vector2(0, 38)
 color = Color(1, 0.615686, 0.188235, 1)
 energy = 1.5
+
 texture = ExtResource("4_star")
 texture_scale = 0.5
 

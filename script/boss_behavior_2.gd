@@ -21,8 +21,7 @@ var protected_phase = true
 var protectors_alive = 4
 var current_wave = 1
 
-# Shooting (Solo Phase)
-var projectile_scene = load("res://scene/enemy_laser.tscn")
+# Projectiles & Guardians
 var protector_scene = preload("res://scene/boss_protector.tscn")
 var guard_textures = [
 	preload("res://asset/PNG/Guardian/GuardianRed3.png"),
@@ -64,10 +63,10 @@ func _ready():
 	if formation:
 		protectors_alive = formation.get_child_count()
 		for child in formation.get_children():
-			if not child.tree_exited.is_connected(_on_protector_died):
-				child.tree_exited.connect(_on_protector_died)
+			_connect_protector_signals(child)
 	
 	reset_shoot_timer()
+	super._ready()
 
 func _update_bounds():
 	var vs = get_viewport_rect().size
@@ -172,16 +171,23 @@ func spawn_second_wave():
 		var angle = i * (TAU / 8.0)
 		var pos = Vector2(cos(angle), sin(angle)) * radius
 		
-		var prot = protector_scene.instantiate()
+		var game = get_tree().current_scene
+		var prot: Node
+		if game and "pool_manager" in game and is_instance_valid(game.pool_manager):
+			prot = game.pool_manager.get_node_from_pool(protector_scene)
+		else:
+			prot = protector_scene.instantiate()
+			
 		var formation = get_node_or_null("EscortFormation")
 		if formation:
-			formation.call_deferred("add_child", prot)
+			if not prot.get_parent():
+				formation.call_deferred("add_child", prot)
 			prot.position = pos
 			prot.orbit_radius = radius
 			prot.orbit_angle = angle
 			prot.hp = 25 
 			if "points" in prot: prot.points = 0
-			prot.tree_exited.connect(_on_protector_died)
+			_connect_protector_signals(prot)
 			
 			var prot_sprite = prot.get_node_or_null("Sprite2D")
 			if prot_sprite:
@@ -192,6 +198,8 @@ func spawn_second_wave():
 			var et = create_tween().set_parallel(true)
 			et.tween_property(prot, "scale", Vector2(1.0, 1.0), 0.8).set_trans(Tween.TRANS_BACK)
 			et.tween_property(prot, "modulate:a", 1.0, 0.5)
+			if prot.has_method("reset_pool_state"):
+				prot.reset_pool_state()
 
 func activate_boss():
 	if is_activating: return
@@ -288,9 +296,17 @@ func throw_circle_attack():
 
 func spawn_thrown_protector(index, angle):
 	if !is_inside_tree() or is_dead or _is_dying: return
-	var proj = protector_scene.instantiate()
+	
+	var game = get_tree().current_scene
+	var proj: Node
+	if game and "pool_manager" in game and is_instance_valid(game.pool_manager):
+		proj = game.pool_manager.get_node_from_pool(protector_scene)
+	else:
+		proj = protector_scene.instantiate()
+		
 	if "is_spawning" in proj: proj.is_spawning = false
-	get_tree().current_scene.call_deferred("add_child", proj)
+	if not proj.get_parent():
+		get_tree().current_scene.call_deferred("add_child", proj)
 	
 	proj.global_position = global_position
 	proj.z_index = 10 
@@ -314,6 +330,8 @@ func spawn_thrown_protector(index, angle):
 	proj.orbit_speed = 0 
 	proj.independent = true 
 	
+	_connect_protector_signals(proj)
+	
 	var final_proj_scale = Vector2(1.5, 1.5)
 
 	var launch_tween = create_tween()
@@ -329,6 +347,28 @@ func spawn_thrown_protector(index, angle):
 		if is_instance_valid(proj):
 			proj.scale = final_proj_scale
 	)
+	
+	if proj.has_method("reset_pool_state"):
+		proj.reset_pool_state()
+
+func _connect_protector_signals(prot):
+	if not prot.tree_exited.is_connected(_on_protector_died):
+		prot.tree_exited.connect(_on_protector_died)
+	
+	var game = get_tree().current_scene
+	if game:
+		if prot.has_signal("killed") and game.has_method("_on_enemy_killed"):
+			if not prot.killed.is_connected(game._on_enemy_killed):
+				prot.killed.connect(game._on_enemy_killed)
+		if prot.has_signal("hit") and game.has_method("_on_enemy_hit"):
+			if not prot.hit.is_connected(game._on_enemy_hit):
+				prot.hit.connect(game._on_enemy_hit)
+		if prot.has_signal("laser_shot") and game.has_method("_on_enemy_laser_shot"):
+			if not prot.laser_shot.is_connected(game._on_enemy_laser_shot):
+				prot.laser_shot.connect(game._on_enemy_laser_shot)
+		if prot.has_signal("meteor_shot") and game.has_method("_on_enemy_meteor_shot"):
+			if not prot.meteor_shot.is_connected(game._on_enemy_meteor_shot):
+				prot.meteor_shot.connect(game._on_enemy_meteor_shot)
 
 func _on_visible_on_screen_notifier_2d_screen_exited():
 	if !is_dead and !_is_dying:

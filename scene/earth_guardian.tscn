@@ -10,6 +10,7 @@ radius = 18.408936
 scale = Vector2(3, 3)
 collision_layer = 2
 script = ExtResource("1_wvbkm")
+projectile_type = 1
 speed = 50
 hp = 15
 points = 500

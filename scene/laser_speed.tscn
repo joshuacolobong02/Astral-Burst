@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://bnvxvr4f2hfjy"]
+
+[ext_resource type="Script" uid="uid://cfjjuoyjypgqf" path="res://script/power_up.gd" id="1_rvmqh"]
+[ext_resource type="Texture2D" uid="uid://kcdw5slpqlar" path="res://asset/PNG/Boost/LaserSpeed.png" id="2_speed"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_speed"]
+radius = 12.0
+
+[node name="LaserSpeed" type="Area2D" unique_id=1021809343]
+collision_layer = 8
+collision_mask = 1
+script = ExtResource("1_rvmqh")
+boost_type = 1
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=48606305]
+position = Vector2(0.49999905, 0.5)
+scale = Vector2(0.15, 0.15)
+texture = ExtResource("2_speed")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1100932324]
+shape = SubResource("CircleShape2D_speed")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

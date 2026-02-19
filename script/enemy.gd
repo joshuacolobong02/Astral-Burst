@@ -2,9 +2,14 @@ class_name BaseEnemy extends Area2D
 
 signal killed(points, pos)
 signal hit
+signal laser_shot(pos, direction)
+signal meteor_shot(pos, direction, scale)
 
 enum Type { LINEAR, ORBITAL, ELITE, INFINITY, SEEKER, STRATEGY, STRIKER, STATIONARY }
 @export var type: Type = Type.STATIONARY
+
+enum ProjectileType { LASER, METEOR }
+@export var projectile_type: ProjectileType = ProjectileType.LASER
 
 @export var speed = 150
 @export var hp = 1
@@ -30,9 +35,10 @@ var velocity: Vector2 = Vector2.ZERO
 var player: Node2D
 var ai_shoot_timer := 0.0
 @export var ai_shoot_interval := 1.5
-var enemy_laser_scene = load("res://scene/enemy_laser.tscn")
+var enemy_laser_scene = preload("res://scene/enemy_laser.tscn")
 
 func _ready():
+	add_to_group("enemy")
 	if hp_label:
 		hp_label.visible = false
 	
@@ -47,6 +53,24 @@ func _ready():
 	
 	# Randomize first shot
 	ai_shoot_timer = randf_range(0.5, ai_shoot_interval)
+	
+	reset_pool_state()
+
+func reset_pool_state():
+	is_dead = false
+	is_spawning = false
+	visible = true
+	set_process(true)
+	set_physics_process(true)
+	set_deferred("monitoring", true)
+	set_deferred("monitorable", true)
+	if hp_label: hp_label.visible = false
+	if sprite:
+		sprite.scale = _base_scale
+		sprite.position = _sprite_base_pos
+		sprite.modulate = Color.WHITE
+		sprite.set_instance_shader_parameter("hit_strength", 0.0)
+		sprite.set_instance_shader_parameter("outline_width", 0.0)
 
 func _apply_hit_shader():
 	if sprite:
@@ -81,7 +105,7 @@ func play_fly_in(target_pos: Vector2, duration: float = 1.0):
 	flight_trail.gradient.set_color(1, Color(0.4, 0.7, 1.0, 0.6))
 	flight_trail.joint_mode = Line2D.LINE_JOINT_ROUND
 	flight_trail.begin_cap_mode = Line2D.LINE_CAP_ROUND
-	get_tree().current_scene.add_child(flight_trail)
+	get_tree().current_scene.add_child.call_deferred(flight_trail)
 	
 	var tween = create_tween().set_parallel(true)
 	
@@ -173,7 +197,7 @@ func _physics_process(delta):
 			else:
 				global_position.y += speed * delta
 				
-	if type == Type.SEEKER or type == Type.ELITE or type == Type.STRIKER or type == Type.STATIONARY:
+	if type == Type.SEEKER or type == Type.ELITE or type == Type.STRIKER or type == Type.STATIONARY or type == Type.STRATEGY:
 		ai_shoot_timer -= delta
 		if ai_shoot_timer <= 0:
 			shoot()
@@ -188,24 +212,35 @@ func shoot():
 	if is_dead or is_spawning: return
 	if !is_instance_valid(player):
 		player = get_tree().get_first_node_in_group("player")
-	var viewport_rect = get_viewport_rect()
+	
+	var viewport_rect = get_viewport_rect().grow(100.0) # Grow slightly to allow edge shooting
 	if !viewport_rect.has_point(global_position): return
 	
-	var laser = enemy_laser_scene.instantiate()
-	laser.global_position = global_position
 	var dir = Vector2.DOWN
 	if is_instance_valid(player):
 		dir = (player.global_position - global_position).normalized()
-	if laser.has_method("set"):
-		laser.set("direction", dir)
+	
+	if projectile_type == ProjectileType.METEOR:
+		meteor_shot.emit(global_position, dir, Vector2.ONE)
 	else:
-		laser.rotation = dir.angle() + PI/2
-	get_tree().current_scene.add_child(laser)
+		laser_shot.emit(global_position, dir)
+
 
 func die():
 	if current_hit_tween:
 		current_hit_tween.kill()
-	queue_free()
+	
+	hide()
+	set_process(false)
+	set_physics_process(false)
+	set_deferred("monitoring", false)
+	set_deferred("monitorable", false)
+	
+	var game = get_tree().current_scene
+	if game and "pool_manager" in game and is_instance_valid(game.pool_manager):
+		game.pool_manager.return_to_pool(self, scene_file_path)
+	else:
+		queue_free()
 
 func _on_visible_on_screen_notifier_2d_screen_exited():
 	queue_free()

@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://baft7mmqp7rfm"]
+
+[ext_resource type="Script" uid="uid://cfjjuoyjypgqf" path="res://script/power_up.gd" id="1_rvmqh"]
+[ext_resource type="Texture2D" uid="uid://bo1lcm1g4lslx" path="res://asset/PNG/Boost/ComboGift.png" id="2_combo"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_combo"]
+radius = 6.0
+
+[node name="ComboGift" type="Area2D" unique_id=1875979064]
+collision_layer = 8
+script = ExtResource("1_rvmqh")
+boost_type = 3
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1610866301]
+scale = Vector2(0.06, 0.06)
+texture = ExtResource("2_combo")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=539325563]
+shape = SubResource("CircleShape2D_combo")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]

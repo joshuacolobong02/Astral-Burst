@@ -2,7 +2,7 @@ extends BaseEnemy
 
 var direction = Vector2.DOWN
 var explosion_scene = preload("res://scene/explode_animate.tscn")
-var projectile_scene = load("res://scene/enemy_laser.tscn")
+var projectile_scene = preload("res://scene/meteor_projectile.tscn")
 
 var time_passed = 0.0
 var hover_offset = Vector2.ZERO
@@ -114,27 +114,16 @@ func perform_shoot_sequence():
 		is_shooting = false
 
 func shoot():
-	if !projectile_scene or _is_dying: return
+	if _is_dying: return
 	
-	# Spread pattern increases in desperation
 	var angles = [-20, 0, 20]
 	if is_desperate: angles = [-35, -15, 0, 15, 35]
 	
 	for angle in angles:
-		var proj = projectile_scene.instantiate()
-		get_tree().current_scene.call_deferred("add_child", proj)
-		
-		proj.global_position = global_position
-		proj.z_index = z_index + 1
-		
 		var base_angle = direction.angle() if direction != Vector2.ZERO else PI/2
 		var rad = base_angle + deg_to_rad(angle)
 		var dir = Vector2(cos(rad), sin(rad))
-		
-		if proj.has_method("set"):
-			proj.set("direction", dir)
-		else:
-			proj.rotation = dir.angle() + PI/2
+		meteor_shot.emit(global_position, dir, Vector2(0.6, 0.6))
 
 func set_direction(dir: Vector2):
 	direction = dir

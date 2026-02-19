@@ -7,7 +7,7 @@ var orbit_radius: float = 180.0
 var orbit_speed: float = 1.5
 
 # Shooting properties
-var projectile_scene = load("res://scene/enemy_laser.tscn")
+var projectile_scene = preload("res://scene/meteor_projectile.tscn")
 var shoot_interval_min: float = 2.5 
 var shoot_interval_max: float = 4.5
 
@@ -19,7 +19,6 @@ var direction = Vector2.DOWN
 var explosion_scene = preload("res://scene/explode_animate.tscn")
 
 func _ready():
-	super._ready()
 	# Don't show HP label for minions to reduce clutter
 	if hp_label:
 		hp_label.visible = false
@@ -28,6 +27,14 @@ func _ready():
 	# Determine initial angle based on position if parent is the center
 	orbit_angle = position.angle()
 	orbit_radius = position.length()
+	
+	super._ready()
+
+func reset_pool_state():
+	super.reset_pool_state()
+	_is_dying = false
+	_attack_pattern_index = 0
+	reset_shoot_timer()
 
 func _physics_process(delta):
 	if _is_dying: return
@@ -54,15 +61,25 @@ func die():
 	if _is_dying: return
 	_is_dying = true
 	
+	var game = get_tree().current_scene
 	if explosion_scene:
-		var explosion = explosion_scene.instantiate()
+		var explosion: Node
+		if game and "pool_manager" in game and is_instance_valid(game.pool_manager):
+			explosion = game.pool_manager.get_node_from_pool(explosion_scene)
+		else:
+			explosion = explosion_scene.instantiate()
+			
+		if not explosion.get_parent():
+			game.add_child.call_deferred(explosion)
 		explosion.global_position = global_position
 		explosion.scale = Vector2(0.5, 0.5)
-		get_tree().current_scene.call_deferred("add_child", explosion)
+		if explosion.has_method("reset_pool_state"):
+			explosion.reset_pool_state()
+			
 	super.die()
 
 func shoot():
-	if !projectile_scene or _is_dying: return
+	if _is_dying: return
 	
 	var pattern = _attack_pattern_index % 3
 	_attack_pattern_index += 1
@@ -71,28 +88,19 @@ func shoot():
 		0: # Fan Spread
 			var angles = [-25, -12, 0, 12, 25]
 			for angle in angles:
-				_spawn_projectile(angle)
+				_emit_meteor(angle)
 		1: # Forward Burst (Vertical stack)
 			for i in range(4):
-				_spawn_projectile(0, i * 40.0) 
+				_emit_meteor(0, i * 40.0) 
 		2: # Circular Pulse
 			var count = 6
 			for i in range(count):
 				var angle = (i * (360.0 / count)) - 90.0
-				_spawn_projectile(angle)
+				_emit_meteor(angle)
 
-func _spawn_projectile(angle_offset: float, pos_offset_y: float = 0.0):
-	if _is_dying: return
-	var proj = projectile_scene.instantiate()
-	get_tree().current_scene.call_deferred("add_child", proj)
-	
-	# Spawn slightly ahead of the guardian
-	var spawn_pos = global_position + Vector2(0, 30 + pos_offset_y)
-	proj.global_position = spawn_pos
-	
+func _emit_meteor(angle_offset: float, pos_offset_y: float = 0.0):
 	var rad = deg_to_rad(angle_offset + 90.0)
 	var dir = Vector2(cos(rad), sin(rad))
-	if proj.has_method("set"):
-		proj.set("direction", dir)
-	else:
-		proj.rotation = dir.angle() + PI/2
+	var spawn_pos = global_position + Vector2(0, 30 + pos_offset_y)
+	
+	meteor_shot.emit(spawn_pos, dir, Vector2.ONE)

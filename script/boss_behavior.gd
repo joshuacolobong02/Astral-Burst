@@ -21,7 +21,8 @@ var protected_phase := false  # BigBoss: invulnerable until formation guardians 
 var protectors_alive := 0
 
 # Shooting properties
-var projectile_scene = load("res://scene/meteor_projectile.tscn")
+var projectile_scene: PackedScene
+var meteor_projectile_scene = preload("res://scene/meteor_projectile.tscn")
 var shoot_interval_min: float = 1.2
 var shoot_interval_max: float = 1.8
 
@@ -42,6 +43,9 @@ func _ready():
 	# Solo Guardian HP
 	hp = 50
 	max_hp = hp
+	
+	# Default projectile
+	projectile_scene = meteor_projectile_scene
 	
 	# Determine Boss Type
 	if "Moon" in name:
@@ -72,6 +76,7 @@ func _ready():
 	elif "Meteor" in name: # Big Boss
 		boss_type = "Meteor"
 		meteor_texture = load("res://asset/PNG/Meteors/MeteorYellow1.png")
+		projectile_scene = meteor_projectile_scene
 		hp = max(hp, 120)
 		max_hp = hp
 		protected_phase = true
@@ -101,6 +106,9 @@ func _ready():
 		if sprite:
 			sprite.visible = false
 	reset_shoot_timer()
+	
+	# Explicitly call super._ready to ensure pooling setup if any
+	super._ready()
 
 func _update_bounds():
 	var vs = get_viewport_rect().size
@@ -248,8 +256,6 @@ func shoot_formation():
 		throw_moon_guardians_staggered()
 		return
 		
-	if !projectile_scene: return
-	
 	match boss_type:
 		"Moon": spawn_spread_pattern([-30, -15, 0, 15, 30])
 		"Mars": spawn_spread_pattern([-5, 0, 5])
@@ -317,9 +323,17 @@ func _start_staggered_throw():
 func spawn_thrown_guardian(scene, angle, offset_x = 0):
 	if !is_inside_tree() or is_dead or _is_dying: return
 	var spawn_pos = _clamp_to_bounds(global_position + Vector2(offset_x, 0))
-	var minion = scene.instantiate()
+	
+	var game = get_tree().current_scene
+	var minion: Node
+	if game and "pool_manager" in game and is_instance_valid(game.pool_manager):
+		minion = game.pool_manager.get_node_from_pool(scene)
+	else:
+		minion = scene.instantiate()
+		
 	if "is_spawning" in minion: minion.is_spawning = false
-	get_tree().current_scene.call_deferred("add_child", minion)
+	if not minion.get_parent():
+		get_tree().current_scene.call_deferred("add_child", minion)
 	
 	minion.global_position = spawn_pos
 	minion.z_index = 10
@@ -360,32 +374,18 @@ func spawn_thrown_guardian(scene, angle, offset_x = 0):
 	)
 
 	if minion.has_signal("killed"):
-		var game = get_tree().current_scene
-		if game.has_method("_on_enemy_killed"):
+		if game.has_method("_on_enemy_killed") and not minion.killed.is_connected(game._on_enemy_killed):
 			minion.killed.connect(game._on_enemy_killed)
+	if minion.has_signal("meteor_shot") and game.has_method("_on_enemy_meteor_shot"):
+		if not minion.meteor_shot.is_connected(game._on_enemy_meteor_shot):
+			minion.meteor_shot.connect(game._on_enemy_meteor_shot)
 
 func spawn_spread_pattern(angles: Array):
 	for angle in angles:
-		var proj = projectile_scene.instantiate()
-		proj.set_texture(meteor_texture)
-		if "points" in proj: proj.points = 0
-		get_tree().current_scene.call_deferred("add_child", proj)
-		
-		if proj.has_signal("killed"):
-			var game = get_tree().current_scene
-			if game.has_method("_on_enemy_killed"):
-				proj.killed.connect(game._on_enemy_killed)
-				
-		proj.global_position = _clamp_to_bounds(global_position + Vector2(0, 40))
-		proj.z_index = z_index + 1
-		var rad = deg_to_rad(angle + 90.0) 
-		proj.direction = Vector2(cos(rad), sin(rad))
-		
-		var base_scale = 2.0 if is_desperate else 1.5
-		proj.scale = Vector2(base_scale, base_scale)
-		
-		if boss_type == "Oort":
-			proj.scale = Vector2(2.5, 2.5) if is_desperate else Vector2(2.0, 2.0)
+		var rad = deg_to_rad(angle + 90.0)
+		var dir = Vector2(cos(rad), sin(rad))
+		var spawn_pos = _clamp_to_bounds(global_position + Vector2(0, 40))
+		meteor_shot.emit(spawn_pos, dir, Vector2.ONE)
 
 func _on_visible_on_screen_notifier_2d_screen_exited():
 	# Boss must emit killed so game state updates (spawn_minions, boss_spawned)

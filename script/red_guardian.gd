@@ -7,7 +7,8 @@ var horizontal_sway_amount: float = 50.0
 var initial_x: float = 0.0
 var direction = Vector2.DOWN
 var explosion_scene = preload("res://scene/explode_animate.tscn")
-var projectile_scene = load("res://scene/enemy_laser.tscn")
+var projectile_scene = preload("res://scene/meteor_projectile.tscn")
+var red_meteor_tex = preload("res://asset/PNG/Meteors/MeteorRed3.png")
 
 # Shooting properties
 var shoot_interval_min: float = 2.5
@@ -75,7 +76,7 @@ func perform_shoot_sequence():
 		is_shooting = false
 
 func shoot():
-	if !projectile_scene or _is_dying: return
+	if _is_dying: return
 	
 	var pattern = _attack_pattern_index % 3
 	_attack_pattern_index += 1
@@ -84,34 +85,24 @@ func shoot():
 		0: # Fan Spread
 			var angles = [-30, -15, 0, 15, 30]
 			for angle in angles:
-				_spawn_projectile(angle)
+				_emit_meteor(angle)
 		1: # Forward Burst
 			for i in range(5):
-				_spawn_projectile(0, i * 35.0)
+				_emit_meteor(0, i * 35.0)
 		2: # Circular Pulse
 			var count = 8
 			for i in range(count):
 				var angle = (i * (360.0 / count)) - 90.0
-				_spawn_projectile(angle)
+				_emit_meteor(angle)
 
-func _spawn_projectile(angle_offset: float, pos_offset_y: float = 0.0):
-	if _is_dying: return
-	var proj = projectile_scene.instantiate()
-	get_tree().current_scene.call_deferred("add_child", proj)
-	
-	var spawn_pos = global_position + Vector2(0, 20 + pos_offset_y)
-	proj.global_position = spawn_pos
-	proj.z_index = z_index + 1
-	
+func _emit_meteor(angle_offset: float, pos_offset_y: float = 0.0):
 	# Aim in movement direction + offset
 	var base_angle = direction.angle()
 	var rad = base_angle + deg_to_rad(angle_offset)
 	var dir = Vector2(cos(rad), sin(rad))
+	var spawn_pos = global_position + Vector2(0, 20 + pos_offset_y)
 	
-	if proj.has_method("set"):
-		proj.set("direction", dir)
-	else:
-		proj.rotation = dir.angle() + PI/2
+	meteor_shot.emit(spawn_pos, dir, Vector2(0.5, 0.5))
 
 func set_direction(dir: Vector2):
 	direction = dir
@@ -121,8 +112,18 @@ func die():
 	_is_dying = true
 	
 	if explosion_scene:
-		var explosion = explosion_scene.instantiate()
+		var game = get_tree().current_scene
+		var explosion: Node
+		if game and "pool_manager" in game and is_instance_valid(game.pool_manager):
+			explosion = game.pool_manager.get_node_from_pool(explosion_scene)
+		else:
+			explosion = explosion_scene.instantiate()
+			
+		if not explosion.get_parent():
+			game.add_child.call_deferred(explosion)
 		explosion.global_position = global_position
 		explosion.scale = Vector2(0.5, 0.5)
-		get_tree().current_scene.call_deferred("add_child", explosion)
+		if explosion.has_method("reset_pool_state"):
+			explosion.reset_pool_state()
+			
 	super.die()

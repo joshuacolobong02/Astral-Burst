@@ -41,7 +41,8 @@ func _ready():
 	
 	# Wait for layout engine to calculate sizes
 	await get_tree().process_frame
-	
+	if OS.get_name() in ["iOS", "Android"] and title:
+		title.offset_top += UIConstants.get_safe_margin()
 	# Set pivots for all animated elements
 	_setup_pivots()
 	

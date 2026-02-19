@@ -56,12 +56,12 @@ offset_bottom = 250.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 14
 alignment = 1
 
 [node name="PlayButton" type="TextureButton" parent="MenuContent/Buttons" unique_id=1891037080]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(200, 80)
+custom_minimum_size = Vector2(220, 72)
 layout_mode = 2
 texture_normal = ExtResource("3_3xx8g")
 ignore_texture_size = true
@@ -69,7 +69,7 @@ stretch_mode = 5
 
 [node name="SettingsButton" type="TextureButton" parent="MenuContent/Buttons" unique_id=2012332429]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(200, 80)
+custom_minimum_size = Vector2(220, 72)
 layout_mode = 2
 texture_normal = ExtResource("4_7vxn0")
 ignore_texture_size = true
@@ -77,7 +77,7 @@ stretch_mode = 5
 
 [node name="QuitButton" type="TextureButton" parent="MenuContent/Buttons" unique_id=39934515]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(200, 80)
+custom_minimum_size = Vector2(220, 72)
 layout_mode = 2
 texture_normal = ExtResource("5_2fnc2")
 ignore_texture_size = true

@@ -37,7 +37,14 @@ func setup_grid(r: int, c: int, s: Vector2, speed: float):
 
 func spawn_unit(slot_pos: Vector2):
 	# Dedicated Ship Fleet (No meteors)
-	var unit = preload("res://scene/enemy_ship.tscn").instantiate()
+	var game = get_tree().current_scene
+	var unit_scene = preload("res://scene/enemy_ship.tscn")
+	var unit: Node
+	
+	if game and "pool_manager" in game and is_instance_valid(game.pool_manager):
+		unit = game.pool_manager.get_node_from_pool(unit_scene)
+	else:
+		unit = unit_scene.instantiate()
 		
 	add_child(unit)
 	unit.position = slot_pos
@@ -45,9 +52,19 @@ func spawn_unit(slot_pos: Vector2):
 	# Use FleetMovement strategy
 	unit.movement_strategy = FleetMovement.new()
 	
-	var game = get_tree().current_scene
-	if unit.has_signal("killed") and game.has_method("_on_enemy_killed"):
-		unit.killed.connect(game._on_enemy_killed)
+	if game:
+		if unit.has_signal("killed") and game.has_method("_on_enemy_killed"):
+			if not unit.killed.is_connected(game._on_enemy_killed):
+				unit.killed.connect(game._on_enemy_killed)
+		if unit.has_signal("hit") and game.has_method("_on_enemy_hit"):
+			if not unit.hit.is_connected(game._on_enemy_hit):
+				unit.hit.connect(game._on_enemy_hit)
+		if unit.has_signal("laser_shot") and game.has_method("_on_enemy_laser_shot"):
+			if not unit.laser_shot.is_connected(game._on_enemy_laser_shot):
+				unit.laser_shot.connect(game._on_enemy_laser_shot)
+	
+	if unit.has_method("reset_pool_state"):
+		unit.reset_pool_state()
 
 func _physics_process(delta: float):
 	if get_child_count() == 0: return

@@ -2,26 +2,27 @@
 
 [ext_resource type="FontFile" uid="uid://bep61n0658qjk" path="res://asset/Bonus/Font/kenvector_future_thin.ttf" id="1_gt22q"]
 [ext_resource type="Script" uid="uid://cuu1iybn3m58i" path="res://script/game_over_screen.gd" id="1_l4tlu"]
-[ext_resource type="FontFile" uid="uid://m7m32kfhij81" path="res://asset/Bonus/Font/kenvector_future.ttf" id="3_fdghx"]
+[ext_resource type="Texture2D" uid="uid://d4m7cdjpbmdu6" path="res://asset/UI/GameOver.png" id="2_gameover"]
+[ext_resource type="Texture2D" uid="uid://catlkwc5k1me0" path="res://asset/UI/PlayAgain.png" id="3_playagain"]
+[ext_resource type="Texture2D" uid="uid://chtl5kdlegj7a" path="res://asset/UI/Quit.png" id="4_quit"]
+[ext_resource type="Texture2D" uid="uid://puga0r7fr2aq" path="res://asset/PNG/Face/Smirk.png" id="5_smirk"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_w3hxg"]
-bg_color = Color(0, 0.6908592, 0.9410013, 1)
+bg_color = Color(0.05, 0.05, 0.08, 0)
 corner_radius_top_left = 32
 corner_radius_top_right = 32
 corner_radius_bottom_right = 32
 corner_radius_bottom_left = 32
 
-[sub_resource type="LabelSettings" id="LabelSettings_l4tlu"]
-font = ExtResource("1_gt22q")
-font_size = 52
-
 [sub_resource type="LabelSettings" id="LabelSettings_fdghx"]
 font = ExtResource("1_gt22q")
-font_size = 28
+font_size = 26
+font_color = Color(1, 0.95, 0.9, 1)
 
 [sub_resource type="LabelSettings" id="LabelSettings_2yv1s"]
 font = ExtResource("1_gt22q")
-font_size = 28
+font_size = 20
+font_color = Color(0.9, 0.92, 1, 1)
 
 [node name="GameOverScreen" type="Control" unique_id=178852948]
 layout_mode = 3
@@ -33,13 +34,14 @@ grow_vertical = 2
 script = ExtResource("1_l4tlu")
 
 [node name="ColorRect" type="ColorRect" parent="." unique_id=2124824735]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.011764706, 0.011764706, 0.011764706, 0.49019608)
+color = Color(0.011764706, 0.011764706, 0.011764706, 0)
 
 [node name="Panel" type="Panel" parent="." unique_id=68590282]
 layout_mode = 1
@@ -48,26 +50,44 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -179.0
-offset_top = -228.5
-offset_right = 179.0
-offset_bottom = 228.5
+offset_left = -165.0
+offset_top = -195.0
+offset_right = 165.0
+offset_bottom = 195.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_w3hxg")
 
-[node name="GameOver" type="Label" parent="Panel" unique_id=576964557]
+[node name="GameOver" type="TextureRect" parent="Panel" unique_id=576964557]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -142.0
+offset_top = -230.0
+offset_right = 142.0
+offset_bottom = -90.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_gameover")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SmirkFace" type="TextureRect" parent="Panel" unique_id=1802994651]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
-offset_left = -157.0
-offset_top = 47.0
-offset_right = 157.0
-offset_bottom = 106.0
+offset_left = -188.0
+offset_top = 32.0
+offset_right = -76.0
+offset_bottom = 141.0
 grow_horizontal = 2
-text = "Game Over"
-label_settings = SubResource("LabelSettings_l4tlu")
+texture = ExtResource("5_smirk")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="HighScore" type="Label" parent="Panel" unique_id=628824828]
 layout_mode = 1
@@ -76,10 +96,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -158.0
-offset_top = -111.5
-offset_right = 156.0
-offset_bottom = -52.5
+offset_left = -140.0
+offset_top = -42.0
+offset_right = 140.0
+offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "Hi-Score: 999999"
@@ -94,10 +114,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -158.0
-offset_top = -53.5
-offset_right = 156.0
-offset_bottom = 5.5
+offset_left = -140.0
+offset_top = 2.0
+offset_right = 140.0
+offset_bottom = 36.0
 grow_horizontal = 2
 grow_vertical = 2
 text = "Score: 999999"
@@ -105,21 +125,35 @@ label_settings = SubResource("LabelSettings_2yv1s")
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="RestartButton" type="Button" parent="Panel" unique_id=373510639]
+[node name="Buttons" type="VBoxContainer" parent="Panel" unique_id=303868012]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -99.75
-offset_top = 54.5
-offset_right = 99.75
-offset_bottom = 127.5
+offset_left = -100.0
+offset_top = 42.0
+offset_right = 100.0
+offset_bottom = 172.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_fonts/font = ExtResource("3_fdghx")
-theme_override_font_sizes/font_size = 32
-text = "RETRY"
+theme_override_constants/separation = 8
+alignment = 1
 
-[connection signal="pressed" from="Panel/RestartButton" to="." method="_on_restart_button_pressed"]
+[node name="PlayAgainButton" type="TextureButton" parent="Panel/Buttons" unique_id=1510034277]
+custom_minimum_size = Vector2(220, 64)
+layout_mode = 2
+texture_normal = ExtResource("3_playagain")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="QuitButton" type="TextureButton" parent="Panel/Buttons" unique_id=1611516026]
+custom_minimum_size = Vector2(220, 64)
+layout_mode = 2
+texture_normal = ExtResource("4_quit")
+ignore_texture_size = true
+stretch_mode = 5
+
+[connection signal="pressed" from="Panel/Buttons/PlayAgainButton" to="." method="_on_restart_button_pressed"]
+[connection signal="pressed" from="Panel/Buttons/QuitButton" to="." method="_on_quit_button_pressed"]

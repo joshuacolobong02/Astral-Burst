@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://cc503fq2eocem"]
+[gd_scene format=4 uid="uid://cc503fq2eocem"]
 
 [ext_resource type="Script" uid="uid://ccd13t02etrim" path="res://script/game.gd" id="1_5kiuu"]
 [ext_resource type="PackedScene" uid="uid://cv4yph0yjjxff" path="res://scene/player.tscn" id="2_dbls1"]
@@ -13,7 +13,6 @@
 [ext_resource type="Texture2D" uid="uid://dpcrq7ullyngm" path="res://asset/Backgrounds/AtralBurstBG2.png" id="11_5g16k"]
 [ext_resource type="Texture2D" uid="uid://bnrrxr08agjao" path="res://asset/Backgrounds/AtralBurstBG1.png" id="11_i6gbm"]
 [ext_resource type="Texture2D" uid="uid://5whwk05xte0s" path="res://asset/Backgrounds/BGMobile1.png" id="12_nebula"]
-[ext_resource type="Texture2D" uid="uid://byy6dd3bevnb8" path="res://asset/Backgrounds/OortCloud.png" id="13_oort"]
 [ext_resource type="Texture2D" uid="uid://d46lcwxhu77y" path="res://asset/Backgrounds/Earth.png" id="16_earth"]
 [ext_resource type="Texture2D" uid="uid://bve2pre0u3ufe" path="res://asset/Backgrounds/Moon.png" id="16_moon"]
 [ext_resource type="Texture2D" uid="uid://dcjiqq64632rq" path="res://asset/Backgrounds/Mars.png" id="17_mars"]
@@ -29,6 +28,7 @@
 [ext_resource type="AudioStream" uid="uid://eshwrr0fqnmq" path="res://asset/Bonus/gameOver.ogg" id="27_gameover"]
 [ext_resource type="Shader" uid="uid://bugxrvxji3stj" path="res://script/simple_blur.gdshader" id="28_blur"]
 [ext_resource type="Script" uid="uid://ij8s6cqwebx8" path="res://script/music_manager.gd" id="29_music"]
+[ext_resource type="Texture2D" uid="uid://clkk6yv3ehsyt" path="res://asset/PNG/Effects/star1.png" id="30_star1"]
 
 [sub_resource type="Environment" id="Environment_game"]
 background_mode = 3
@@ -49,22 +49,22 @@ shader_parameter/glow_width = 0.1
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_blur"]
 shader = ExtResource("28_blur")
+shader_parameter/lod = 2.0
 
 [sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ll5lq"]
 particle_flag_disable_z = true
 emission_shape = 3
-emission_box_extents = Vector3(201, 1, 1)
+emission_box_extents = Vector3(201, 5, 1)
 direction = Vector3(0, 1, 0)
-spread = 5.0
-initial_velocity_min = 400.0
-initial_velocity_max = 800.0
+spread = 0.0
+initial_velocity_min = 600.0
+initial_velocity_max = 1000.0
 gravity = Vector3(0, 0, 0)
-scale_min = 0.01
-scale_max = 0.05
-color = Color(1, 1, 1, 0.8)
+scale_min = 0.12
+scale_max = 0.28
+color = Color(1, 1, 1, 0.9)
 
 [node name="Game" type="Node2D" unique_id=1385472228]
-position = Vector2(1, 0)
 script = ExtResource("1_5kiuu")
 enemy_scenes = Array[PackedScene]([ExtResource("4_xwcet"), ExtResource("5_p1ry8"), ExtResource("8_w1kyf")])
 
@@ -75,9 +75,6 @@ color = Color(0.701961, 0.701961, 0.8, 1)
 environment = SubResource("Environment_game")
 
 [node name="SFX" type="Node" parent="." unique_id=600059791]
-
-[node name="MusicManager" type="Node" parent="." unique_id=998877665]
-script = ExtResource("29_music")
 
 [node name="LaserSound" type="AudioStreamPlayer2D" parent="SFX" unique_id=1873555487]
 stream = ExtResource("5_i6gbm")
@@ -99,6 +96,9 @@ volume_db = -10.0
 stream = ExtResource("27_gameover")
 volume_db = -18.0
 
+[node name="MusicManager" type="Node" parent="." unique_id=998877665]
+script = ExtResource("29_music")
+
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1608626141]
 position = Vector2(201, 437)
 
@@ -116,11 +116,6 @@ visible = false
 [node name="OortCloudLayer" type="ParallaxLayer" parent="ParallaxBackground" unique_id=985389716]
 motion_scale = Vector2(0.1, 0.1)
 motion_mirroring = Vector2(402, 1748)
-
-[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/OortCloudLayer" unique_id=1125046399]
-modulate = Color(1, 1, 1, 0.2)
-texture = ExtResource("13_oort")
-centered = false
 
 [node name="NebulaLayer" type="ParallaxLayer" parent="ParallaxBackground" unique_id=1391032846]
 motion_scale = Vector2(0.2, 0.2)
@@ -284,9 +279,10 @@ mouse_filter = 2
 
 [node name="StarParticlesEffect" type="GPUParticles2D" parent="." unique_id=366691607]
 position = Vector2(201, -43)
-emitting = false
-amount = 200
-preprocess = 5.0
+amount = 120
+texture = ExtResource("30_star1")
+lifetime = 4.0
+preprocess = 2.0
 process_material = SubResource("ParticleProcessMaterial_ll5lq")
 
 [node name="EnemySpawnTimer" type="Timer" parent="." unique_id=2007944516]
@@ -308,5 +304,8 @@ position = Vector2(201, 648)
 position = Vector2(-1, -1)
 
 [node name="EnemyContainer" type="Node2D" parent="." unique_id=128312254]
+
+[node name="PowerupContainer" type="Node2D" parent="." unique_id=1395327546]
+z_index = 100
 
 [connection signal="timeout" from="EnemySpawnTimer" to="." method="_on_enemy_spawn_timer_timeout"]

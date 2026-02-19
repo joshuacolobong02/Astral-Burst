@@ -3,10 +3,11 @@ extends Node2D
 ## Central authority for boost spawning and timing logic.
 class_name BoostManager
 
-enum BoostType { LASER_UPGRADE, LASER_SPEED, SHIELD, BOOST_BAG }
+enum BoostType { LASER_UPGRADE, LASER_SPEED, MISSILE, SHIELD, BOOST_BAG }
 
 @export var laser_boost_scene: PackedScene
 @export var speed_boost_scene: PackedScene
+@export var missile_boost_scene: PackedScene
 @export var shield_boost_scene: PackedScene
 @export var boost_bag_scene: PackedScene
 
@@ -29,14 +30,10 @@ func _ready():
 	# Don't start here - wait for game to call start_cycle() when player launches
 
 func start_cycle():
-	# First boost drops 30s after player launches (use create_timer for reliable timing)
+	# First boost drops 10s after player launches
 	spawn_timer.stop()
 	cooldown_timer.stop()
-	get_tree().create_timer(30.0).timeout.connect(_on_first_boost_timeout)
-
-func _on_first_boost_timeout():
-	if player and is_instance_valid(player) and powerup_container:
-		spawn_boosts()
+	spawn_timer.start(10.0)
 
 func setup(p: Player, container: Node2D):
 	if player and is_instance_valid(player):
@@ -53,7 +50,9 @@ func _on_spawn_timer_timeout():
 	spawn_boosts()
 
 func spawn_boost():
-	var types = [BoostType.LASER_UPGRADE, BoostType.LASER_SPEED, BoostType.SHIELD, BoostType.BOOST_BAG]
+	# Timed drops: only individual boosts (LaserUpgrade, Missile, ShieldBoost)
+	# ComboGift drops from BigBoss only
+	var types = [BoostType.LASER_UPGRADE, BoostType.LASER_SPEED, BoostType.MISSILE, BoostType.SHIELD]
 	return types.pick_random()
 
 func spawn_boosts():
@@ -78,13 +77,17 @@ func _instantiate_boost(type: BoostType, index: int, total: int, view_size: Vect
 	var scene = laser_boost_scene
 	match type:
 		BoostType.LASER_SPEED: scene = speed_boost_scene
+		BoostType.MISSILE: scene = missile_boost_scene
 		BoostType.SHIELD: scene = shield_boost_scene
 		BoostType.BOOST_BAG: scene = boost_bag_scene
 	
-	if !scene: return
+	if !scene:
+		push_warning("BoostManager: scene is null for type %s" % type)
+		return
 	
 	var inst = scene.instantiate()
 	powerup_container.add_child(inst)
+	inst.top_level = true
 	inst.z_index = 150
 	if inst.has_signal("despawned"):
 		inst.despawned.connect(_on_boost_despawned)

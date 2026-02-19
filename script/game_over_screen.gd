@@ -1,11 +1,14 @@
 extends Control
 
 signal restart
+signal quit_pressed
 
 @onready var panel = $Panel
 @onready var score_label = $Panel/Score
 @onready var high_score_label = $Panel/HighScore
-@onready var restart_button = $Panel/RestartButton
+@onready var play_again_button = $Panel/Buttons/PlayAgainButton
+@onready var quit_button = $Panel/Buttons/QuitButton
+@onready var smirk_face = $Panel/SmirkFace
 
 var _final_score := 0
 var _active_tweens: Dictionary = {}
@@ -17,12 +20,19 @@ func _ready():
 	
 	# Wait for layout to ensure sizes are correct
 	await get_tree().process_frame
+	if OS.get_name() in ["iOS", "Android"]:
+		var m = UIConstants.get_safe_margin()
+		panel.offset_top += m
+		panel.offset_bottom += m
 	panel.pivot_offset = panel.size / 2
-	restart_button.pivot_offset = restart_button.size / 2
+	play_again_button.pivot_offset = play_again_button.size / 2
+	quit_button.pivot_offset = quit_button.size / 2
 	
 	# Add mobile touch feedback
-	restart_button.button_down.connect(_on_button_down.bind(restart_button))
-	restart_button.button_up.connect(_on_button_up.bind(restart_button))
+	play_again_button.button_down.connect(_on_button_down.bind(play_again_button))
+	play_again_button.button_up.connect(_on_button_up.bind(play_again_button))
+	quit_button.button_down.connect(_on_button_down.bind(quit_button))
+	quit_button.button_up.connect(_on_button_up.bind(quit_button))
 
 func show_screen():
 	# Kill any existing tweens
@@ -41,17 +51,24 @@ func show_screen():
 	_active_tweens["score"] = score_tween
 	
 	await tween.finished
+	_start_smirk_idle()
 	_start_button_pulse()
+
+func _start_smirk_idle():
+	if smirk_face:
+		var idle = create_tween().set_loops()
+		idle.tween_property(smirk_face, "scale", Vector2(1.05, 1.05), 1.0).set_trans(Tween.TRANS_SINE)
+		idle.tween_property(smirk_face, "scale", Vector2(0.95, 0.95), 1.0).set_trans(Tween.TRANS_SINE)
 
 func _start_button_pulse():
 	var pulse = create_tween().set_loops()
 	pulse.set_parallel(true)
-	pulse.tween_property(restart_button, "scale", Vector2(1.06, 1.06), 0.8).set_trans(Tween.TRANS_SINE)
-	pulse.tween_property(restart_button, "modulate", Color(1.1, 1.1, 1.3, 1.0), 0.8).set_trans(Tween.TRANS_SINE)
+	pulse.tween_property(play_again_button, "scale", Vector2(1.06, 1.06), 0.8).set_trans(Tween.TRANS_SINE)
+	pulse.tween_property(play_again_button, "modulate", Color(1.1, 1.1, 1.3, 1.0), 0.8).set_trans(Tween.TRANS_SINE)
 	pulse.set_parallel(false)
-	pulse.tween_property(restart_button, "scale", Vector2.ONE, 0.8).set_trans(Tween.TRANS_SINE)
+	pulse.tween_property(play_again_button, "scale", Vector2.ONE, 0.8).set_trans(Tween.TRANS_SINE)
 	pulse.set_parallel(true)
-	pulse.tween_property(restart_button, "modulate", Color.WHITE, 0.8).set_trans(Tween.TRANS_SINE)
+	pulse.tween_property(play_again_button, "modulate", Color.WHITE, 0.8).set_trans(Tween.TRANS_SINE)
 	_active_tweens["pulse"] = pulse
 
 func _on_button_down(btn: Control):
@@ -74,6 +91,9 @@ func _on_restart_button_pressed() -> void:
 	await tween.finished
 	visible = false
 	restart.emit()
+
+func _on_quit_button_pressed() -> void:
+	quit_pressed.emit()
 	
 func set_score(value):
 	_final_score = value

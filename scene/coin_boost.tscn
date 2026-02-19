@@ -1,21 +1,21 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene format=3 uid="uid://b4ijbx8fgoq3u"]
 
-[ext_resource type="Script" path="res://script/power_up.gd" id="1_rvmqh"]
-[ext_resource type="Texture2D" path="res://asset/PNG/Boost/Coin .png" id="2_coin"]
+[ext_resource type="Script" uid="uid://cfjjuoyjypgqf" path="res://script/power_up.gd" id="1_rvmqh"]
+[ext_resource type="Texture2D" uid="uid://d2il2ysja5h8n" path="res://asset/PNG/Boost/Coin.png" id="2_wrxtw"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_coin"]
-radius = 26.0
+radius = 12.0
 
-[node name="CoinBoost" type="Area2D"]
+[node name="CoinBoost" type="Area2D" unique_id=1765867677]
 collision_layer = 8
-collision_mask = 1
 script = ExtResource("1_rvmqh")
 is_coin = true
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-texture = ExtResource("2_coin")
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=576569331]
+scale = Vector2(0.06, 0.06)
+texture = ExtResource("2_wrxtw")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=126387900]
 shape = SubResource("CircleShape2D_coin")
 
-[connection signal="body_entered" from="." method="_on_body_entered"]
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
