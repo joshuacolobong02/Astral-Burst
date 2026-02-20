@@ -17,7 +17,7 @@ func _ready():
 func _stretch_anim():
 	var tween = create_tween().set_parallel(true)
 	tween.tween_property($Sprite2D, "scale:y", 0.08, 0.1).set_trans(Tween.TRANS_CUBIC)
-	tween.tween_property($Sprite2D, "scale:x", 0.03, 0.1).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property($Sprite2D, "scale:x", 0.02, 0.1).set_trans(Tween.TRANS_CUBIC)
 
 func reset(pos: Vector2, speed_mult: float = 1.0, dir: Vector2 = Vector2.UP):
 	_is_being_destroyed = false

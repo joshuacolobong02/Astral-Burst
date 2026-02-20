@@ -11,7 +11,7 @@ func get_node_from_pool(scene: PackedScene) -> Node:
 		_pools[path] = []
 	
 	var pool = _pools[path]
-	if pool.size() > 0:
+	while pool.size() > 0:
 		var node = pool.pop_back()
 		if is_instance_valid(node):
 			node.visible = true
@@ -21,11 +21,7 @@ func get_node_from_pool(scene: PackedScene) -> Node:
 				node.reset_pool_state()
 			return node
 	
-	var node = scene.instantiate()
-	if not node.has_signal("tree_exiting"):
-		# Ensure we don't leak if the node is freed normally
-		node.tree_exiting.connect(func(): _on_node_exiting(path, node))
-	return node
+	return scene.instantiate()
 
 func return_to_pool(node: Node, scene_path: String):
 	if not is_instance_valid(node): return
@@ -56,10 +52,4 @@ func _do_return_to_pool(node: Node, scene_path: String):
 	if not _pools.has(scene_path):
 		_pools[scene_path] = []
 	
-	# Ensure we don't add the same node twice
-	if not node in _pools[scene_path]:
-		_pools[scene_path].append(node)
-
-func _on_node_exiting(path: String, node: Node):
-	if _pools.has(path):
-		_pools[path].erase(node)
+	_pools[scene_path].append(node)

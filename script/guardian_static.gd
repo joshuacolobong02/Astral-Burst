@@ -68,7 +68,7 @@ func _physics_process(delta):
 	if _is_dying: return
 	
 	# Difficulty Check
-	if !is_desperate and hp <= (max_hp / 2):
+	if !is_desperate and hp <= (max_hp / 2.0):
 		_enter_desperation_phase()
 	
 	var hit_running = current_hit_tween != null and current_hit_tween.is_running()
@@ -87,7 +87,6 @@ func _physics_process(delta):
 	if independent:
 		# DYNAMIC SWAYING ROAMING (Instead of just falling)
 		var hover_x = sin(time_passed * 2.5 * speed_mod) * 60.0
-		var hover_y = cos(time_passed * 1.5 * speed_mod) * 30.0
 		global_position.y += speed * delta * 0.5 # Slower fall, more sway
 		global_position.x += hover_x * delta * 5.0
 		rotation += (2.0 * speed_mod) * delta

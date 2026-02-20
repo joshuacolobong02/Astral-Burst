@@ -2,8 +2,8 @@ class_name Player extends CharacterBody2D
 
 signal laser_shot(laser_scene: PackedScene, position: Vector2, speed_mult: float, direction: Vector2)
 signal killed
-signal boost_collected(type: BoostManager.BoostType)
-signal boost_expired(type: BoostManager.BoostType)
+signal boost_collected(boost_type: BoostManager.BoostType)
+signal boost_expired(boost_type: BoostManager.BoostType)
 
 @onready var player_spawn_pos = $"../PlayerSpawnPos"
 @onready var muzzle = $Muzzle
@@ -65,9 +65,9 @@ func _setup_wing_missiles():
 	add_child(_wing_missile_right)
 
 func _update_wing_missiles():
-	var show = missile_charges > 0
-	if _wing_missile_left: _wing_missile_left.visible = show
-	if _wing_missile_right: _wing_missile_right.visible = show
+	var should_show = missile_charges > 0
+	if _wing_missile_left: _wing_missile_left.visible = should_show
+	if _wing_missile_right: _wing_missile_right.visible = should_show
 
 func _setup_shield_visual():
 	shield_sprite = Sprite2D.new()
@@ -78,18 +78,18 @@ func _setup_shield_visual():
 	var shield_tween = create_tween().set_loops()
 	shield_tween.tween_property(shield_sprite, "rotation", TAU, 4.0).from(0.0)
 
-func apply_boost(type: BoostManager.BoostType, duration: float = 20.0):
-	if type == BoostManager.BoostType.MISSILE:
+func apply_boost(boost_type: BoostManager.BoostType, duration: float = 20.0):
+	if boost_type == BoostManager.BoostType.MISSILE:
 		missile_charges = mini(missile_charges + 2, 2)
 		_update_wing_missiles()
-		boost_collected.emit(type)
+		boost_collected.emit(boost_type)
 		return
-	if _active_boosts.has(type):
-		_active_boosts[type] = duration
+	if _active_boosts.has(boost_type):
+		_active_boosts[boost_type] = duration
 		return
-	_active_boosts[type] = duration
-	boost_collected.emit(type)
-	match type:
+	_active_boosts[boost_type] = duration
+	boost_collected.emit(boost_type)
+	match boost_type:
 		BoostManager.BoostType.LASER_UPGRADE:
 			sprite.modulate = Color(1.5, 1.5, 2.0)
 		BoostManager.BoostType.LASER_SPEED:
@@ -100,12 +100,12 @@ func apply_boost(type: BoostManager.BoostType, duration: float = 20.0):
 			t.tween_property(shield_sprite, "modulate:a", 0.8, 0.3)
 			t.parallel().tween_property(shield_sprite, "scale", Vector2(1.2, 1.2), 0.3).from(Vector2.ZERO)
 
-func _remove_boost(type: BoostManager.BoostType):
-	if !_active_boosts.has(type): return
-	_active_boosts.erase(type)
-	boost_expired.emit(type)
+func _remove_boost(boost_type: BoostManager.BoostType):
+	if !_active_boosts.has(boost_type): return
+	_active_boosts.erase(boost_type)
+	boost_expired.emit(boost_type)
 	
-	match type:
+	match boost_type:
 		BoostManager.BoostType.LASER_UPGRADE:
 			sprite.modulate = Color.WHITE
 		BoostManager.BoostType.LASER_SPEED:
@@ -148,36 +148,32 @@ func _process(delta):
 			is_invincible = false
 			sprite.visible = true
 	
-	for type in _active_boosts.keys():
-		_active_boosts[type] -= delta
-		if _active_boosts[type] <= 0:
-			_remove_boost(type)
+	for b_type in _active_boosts.keys():
+		_active_boosts[b_type] -= delta
+		if _active_boosts[b_type] <= 0:
+			_remove_boost(b_type)
 	
 func shoot():
 	if is_dying or !visible: return
 	
-	var base_dir = Vector2.UP.rotated(rotation)
+	var base_dir = Vector2.UP
 	var spawn_pos = muzzle.global_position
 	
 	# Center laser
 	laser_shot.emit(laser_scene, spawn_pos, _laser_speed_mult, base_dir)
 	
 	if has_laser_boost_active():
-		# Five-way spread
-		var angles = [-15, 15, -30, 30]
-		var offsets = [Vector2(-35, 5), Vector2(35, 5), Vector2(-70, 20), Vector2(70, 20)]
-		for i in range(angles.size()):
-			var dir = base_dir.rotated(deg_to_rad(angles[i]))
-			var pos = spawn_pos + offsets[i].rotated(rotation)
-			laser_shot.emit(laser_scene, pos, _laser_speed_mult, dir)
+		# Five-way parallel with clear gaps - ignoring ship rotation for straight volley
+		var offsets = [Vector2(-20, 0), Vector2(20, 0), Vector2(-40, 0), Vector2(40, 0)]
+		for i in range(offsets.size()):
+			var pos = spawn_pos + offsets[i]
+			laser_shot.emit(laser_scene, pos, _laser_speed_mult, base_dir)
 	else:
-		# Standard three-way spread
-		var angles = [-12, 12]
-		var offsets = [Vector2(-28, 12), Vector2(28, 12)]
-		for i in range(angles.size()):
-			var dir = base_dir.rotated(deg_to_rad(angles[i]))
-			var pos = spawn_pos + offsets[i].rotated(rotation)
-			laser_shot.emit(laser_scene, pos, _laser_speed_mult, dir)
+		# Standard three-way parallel with clear gaps
+		var offsets = [Vector2(-20, 0), Vector2(20, 0)]
+		for i in range(offsets.size()):
+			var pos = spawn_pos + offsets[i]
+			laser_shot.emit(laser_scene, pos, _laser_speed_mult, base_dir)
 		
 	if laser_sound:
 		var game = get_tree().current_scene

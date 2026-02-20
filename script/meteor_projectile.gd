@@ -1,6 +1,7 @@
 class_name MeteorProjectile extends Area2D
 
 signal killed(points, pos)
+signal despawned(node)
 @export var speed: float = 120.0
 @export var damage: int = 1
 @export var points: int = 50
@@ -95,6 +96,7 @@ func explode():
 	_destroy()
 
 func _destroy():
+	despawned.emit(self)
 	hide()
 	set_physics_process(false)
 	set_deferred("monitoring", false)

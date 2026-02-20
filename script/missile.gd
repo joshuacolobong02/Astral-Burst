@@ -93,17 +93,17 @@ func _explode(victim):
 	
 	var game = get_tree().current_scene
 	if explosion_scene:
-		var exp: Node
+		var explosion_node: Node
 		if game and "pool_manager" in game and is_instance_valid(game.pool_manager):
-			exp = game.pool_manager.get_node_from_pool(explosion_scene)
+			explosion_node = game.pool_manager.get_node_from_pool(explosion_scene)
 		else:
-			exp = explosion_scene.instantiate()
+			explosion_node = explosion_scene.instantiate()
 			
-		if not exp.get_parent():
-			game.add_child.call_deferred(exp)
-		exp.global_position = global_position
-		if exp.has_method("reset_pool_state"):
-			exp.reset_pool_state()
+		if not explosion_node.get_parent():
+			game.add_child.call_deferred(explosion_node)
+		explosion_node.global_position = global_position
+		if explosion_node.has_method("reset_pool_state"):
+			explosion_node.reset_pool_state()
 	
 	_destroy()
 

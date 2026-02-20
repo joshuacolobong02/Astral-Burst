@@ -124,7 +124,7 @@ func _physics_process(delta):
 	if _is_dying: return
 	
 	# Difficulty Check: Half Life
-	if !is_desperate and hp <= (max_hp / 2):
+	if !is_desperate and hp <= (max_hp / 2.0):
 		_enter_desperation_phase()
 	
 	if !has_settled:

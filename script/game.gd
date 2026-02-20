@@ -131,15 +131,12 @@ var _boost_drop_timer := 0.0
 
 var scroll_speed = 600
 var drift_speed = 5
-var _manual_scroll_offset := Vector2.ZERO
 var _last_meteor_patterns: Array[String] = []
 var _planet_layers_config: Array[Dictionary] = []
 
 @onready var death_blur = $DeathBlur
 @onready var death_flash = $DeathFlash
 
-var _shake_intensity := 0.0
-var _shake_duration := 0.0
 var _launch_tween: Tween
 
 const WAVE_SEQUENCE = [
@@ -148,6 +145,21 @@ const WAVE_SEQUENCE = [
 	"SCATTER", "WALL", "DIAGONAL", "SPIRAL", "SQUAD"
 ]
 
+var _total_enemy_count := 0
+
+func _spawn_init(node: Node):
+	if not node.despawned.is_connected(_on_enemy_despawned):
+		node.despawned.connect(_on_enemy_despawned)
+	# Only count non-ambient nodes for wave clearing
+	if not node.has_meta("is_ambient"):
+		node.set_meta("is_counted", true)
+		_total_enemy_count += 1
+
+func _on_enemy_despawned(node: Node):
+	if node.has_meta("is_counted"):
+		_total_enemy_count = max(0, _total_enemy_count - 1)
+		node.remove_meta("is_counted")
+
 func _ready():
 	# Instantiate Managers
 	pool_manager = PoolManager.new()
@@ -155,7 +167,7 @@ func _ready():
 	add_child(pool_manager)
 	
 	sfx_manager = SoundManager.new()
-	sfx_manager.name = "SFXManager"
+	sfx_manager.name = "SoundManager"
 	add_child(sfx_manager)
 	
 	pb.set_script(load("res://script/parallax_manager.gd"))
@@ -186,7 +198,8 @@ func _ready():
 	coin_boost_scene = _load_boost_scene("res://scene/coin_boost.tscn")
 	speed_boost_scene = _load_boost_scene("res://scene/laser_speed.tscn")
 	boost_bag_scene = _load_boost_scene("res://scene/combo_gift.tscn")
-	_warm_up_resources()
+	
+	_warm_up_resources_async()
 	
 	var save_file = FileAccess.open("user://save.data", FileAccess.READ)
 	if save_file!=null: high_score = save_file.get_32()
@@ -235,6 +248,21 @@ func _ready():
 	
 	timer.one_shot = true
 
+func _warm_up_resources_async():
+	var scenes_to_warm = [
+		laser_scene, basic_enemy_scene, diver_enemy_scene, large_enemy_scene, moon_enemy_1, moon_enemy_2,
+		meteor_projectile_scene, explosion_scene, explosion_boss_scene, player_scene
+	]
+	for scene in scenes_to_warm:
+		if scene:
+			var instance = scene.instantiate()
+			instance.process_mode = PROCESS_MODE_DISABLED
+			add_child(instance)
+			instance.visible = false
+			# Give the engine 1 frame to process this instance before freeing
+			await get_tree().process_frame
+			instance.queue_free()
+
 func _input(event):
 	if not game_started or is_paused: return
 	var pos: Vector2
@@ -275,12 +303,10 @@ func _process(delta):
 	if timer.wait_time > min_wait: timer.wait_time -= delta * 0.01
 	elif timer.wait_time < min_wait: timer.wait_time = min_wait
 	if game_started and not boss_spawned and not _is_waiting_for_next_wave and not _is_transitioning:
-		var enemy_count = 0
-		for child in enemy_container.get_children():
-			if not child.has_meta("is_ambient"): enemy_count += 1
+		var enemy_count = _total_enemy_count
 		if fleet_controller: enemy_count += fleet_controller.get_child_count()
 		
-		if _wave_active and enemy_count == 0:
+		if _wave_active and enemy_count <= 0:
 			formation_stage = 0 # Reset stage when cleared
 			_start_wave_gap()
 	
@@ -419,6 +445,7 @@ func _on_restart_requested():
 	# Use self. to trigger setters
 	self.score = 0
 	self.lives = 3
+	_total_enemy_count = 0
 	music_manager.stop_music(); music_manager.set_intensity(0.0); current_stage = Stage.SPACE
 	boss_spawned = false; current_formation_index = 0; _last_meteor_patterns.clear()
 	
@@ -557,6 +584,7 @@ func spawn_boss():
 		Stage.KUIPER_BELT: boss = meteor_boss_2_scene.instantiate()
 		Stage.OORT_CLOUD: boss = oort_boss_scene.instantiate()
 	if boss:
+		_spawn_init(boss)
 		boss.global_position = Vector2(201, -100)
 		if "enter_speed" in boss: boss.enter_speed = 150; boss.settle_y = 250
 		boss.killed.connect(_on_enemy_killed); boss.hit.connect(_on_enemy_hit)
@@ -565,26 +593,15 @@ func spawn_boss():
 		enemy_container.add_child(boss); spawn_guardian_escorts(boss, 4)
 
 func spawn_enemy(scene, pos, speed_override = -1.0, points_override = -1, scale_override = Vector2.ZERO, hp_override = -1):
-	var view_size = get_viewport_rect().size
-	# 1. Determine random off-screen start pos (Top, Left, or Right)
-	var start_pos = Vector2.ZERO
-	var side = randi() % 3
-	match side:
-		0: # Top
-			start_pos = Vector2(randf_range(0, view_size.x), -100)
-		1: # Left
-			start_pos = Vector2(-100, randf_range(0, view_size.y * 0.5))
-		2: # Right
-			start_pos = Vector2(view_size.x + 100, randf_range(0, view_size.y * 0.5))
-			
 	var e = scene.instantiate()
-	e.global_position = start_pos
+	e.global_position = pos
 	
 	if speed_override > 0: e.speed = speed_override
 	if points_override >= 0: e.points = points_override
 	if scale_override != Vector2.ZERO: e.scale = scale_override
 	if hp_override > 0: e.hp = hp_override
 	
+	_spawn_init(e)
 	e.killed.connect(_on_enemy_killed)
 	e.hit.connect(_on_enemy_hit)
 	if e.has_signal("laser_shot"):
@@ -654,6 +671,8 @@ func spawn_special_wave():
 		e.orbit_angle = i * (TAU / count)
 		e.type = movement_type
 		e.points = 100
+		
+		_spawn_init(e)
 		e.killed.connect(_on_enemy_killed)
 		e.hit.connect(_on_enemy_hit)
 		if e.has_signal("laser_shot"):
@@ -675,10 +694,7 @@ func spawn_guardian_escorts(target: Node2D, count: int = 3):
 		pos.x = clamp(pos.x, 50, view_size.x - 50)
 		pos.y = clamp(pos.y, 100, 450)
 		
-		var side = randi() % 2
-		var start_pos = Vector2(-100, pos.y) if side == 0 else Vector2(view_size.x + 100, pos.y)
-		
-		var s = _spawn_ship(start_pos)
+		var s = _spawn_ship(pos)
 		if s: 
 			s.type = BaseEnemy.Type.STATIONARY
 			s.hp = 3
@@ -712,7 +728,7 @@ func spawn_meteor_formation(type: String):
 			var offsets = [Vector2(0,0), Vector2(0, -100), Vector2(0, 100), Vector2(-100, 0), Vector2(100, 0)]
 			for off in offsets:
 				var target_pos = center + off
-				var s = _spawn_ship(Vector2(target_pos.x, -100))
+				var s = _spawn_ship(target_pos)
 				if s: 
 					s.type = BaseEnemy.Type.STATIONARY; s.hp = 3
 					if s.has_method("play_fly_in"): s.play_fly_in(target_pos, 0.7)
@@ -721,9 +737,7 @@ func spawn_meteor_formation(type: String):
 			var offsets = [Vector2(-120,-120), Vector2(120,-120), Vector2(0,0), Vector2(-120,120), Vector2(120,120)]
 			for off in offsets:
 				var target_pos = center + off
-				var side = randi() % 2
-				var start_pos = Vector2(-100, target_pos.y) if side == 0 else Vector2(view_size.x + 100, target_pos.y)
-				var s = _spawn_ship(start_pos)
+				var s = _spawn_ship(target_pos)
 				if s: 
 					s.type = BaseEnemy.Type.STATIONARY; s.hp = 3
 					if s.has_method("play_fly_in"): s.play_fly_in(target_pos, 0.8)
@@ -732,8 +746,8 @@ func spawn_meteor_formation(type: String):
 			for i in range(3):
 				var target1 = Vector2(center_x + (i-1)*80, 150 + abs(i-1)*60)
 				var target2 = Vector2(center_x + (i-1)*80, 350 + abs(i-1)*60)
-				var s1 = _spawn_ship(Vector2(target1.x, -100))
-				var s2 = _spawn_ship(Vector2(target2.x, -100))
+				var s1 = _spawn_ship(target1)
+				var s2 = _spawn_ship(target2)
 				s1.hp = 3; s2.hp = 3
 				if s1.has_method("play_fly_in"): s1.play_fly_in(target1, 0.9)
 				if s2.has_method("play_fly_in"): s2.play_fly_in(target2, 1.1)
@@ -741,16 +755,14 @@ func spawn_meteor_formation(type: String):
 			for x in range(3):
 				for y in range(3):
 					var target_pos = Vector2(100 + x*100, 150 + y*80)
-					var side = randi() % 2
-					var start_pos = Vector2(-100, target_pos.y) if side == 0 else Vector2(view_size.x + 100, target_pos.y)
-					var s = _spawn_ship(start_pos)
+					var s = _spawn_ship(target_pos)
 					if s: 
 						s.type = BaseEnemy.Type.STATIONARY; s.hp = 3
 						if s.has_method("play_fly_in"): s.play_fly_in(target_pos, 0.6 + (x+y)*0.1)
 		"WALL":
 			for i in range(5):
 				var target_pos = Vector2(60 + i*70, 150)
-				var s = _spawn_ship(Vector2(target_pos.x, -100))
+				var s = _spawn_ship(target_pos)
 				if s: 
 					s.type = BaseEnemy.Type.STATIONARY; s.hp = 3
 					if s.has_method("play_fly_in"): s.play_fly_in(target_pos, 0.5 + i*0.1)
@@ -764,21 +776,14 @@ func spawn_meteor_formation(type: String):
 			for i in range(6):
 				var angle = i * (TAU / 6.0)
 				var target_pos = center + Vector2(cos(angle), sin(angle)) * 140.0
-				var start_x = view_size.x + 100 if target_pos.x > view_size.x / 2 else -100
-				var start_pos = Vector2(start_x, target_pos.y)
-				var s = _spawn_ship(start_pos)
+				var s = _spawn_ship(target_pos)
 				if s: 
 					s.type = BaseEnemy.Type.STATIONARY; s.hp = 3
 					if s.has_method("play_fly_in"): s.play_fly_in(target_pos, 0.8)
 		"SCATTER":
 			for i in range(6):
 				var target_pos = Vector2(randf_range(60, view_size.x - 60), randf_range(80, 350))
-				var side = randi() % 3
-				var start_pos = Vector2.ZERO
-				if side == 0: start_pos = Vector2(target_pos.x, -100)
-				elif side == 1: start_pos = Vector2(-100, target_pos.y)
-				else: start_pos = Vector2(view_size.x + 100, target_pos.y)
-				var s = _spawn_ship(start_pos)
+				var s = _spawn_ship(target_pos)
 				if s: 
 					s.type = BaseEnemy.Type.STATIONARY; s.hp = 3
 					if s.has_method("play_fly_in"): s.play_fly_in(target_pos, randf_range(0.5, 1.0))
@@ -786,7 +791,7 @@ func spawn_meteor_formation(type: String):
 			var center_x = randf_range(100, view_size.x - 100)
 			for i in range(3):
 				var target_pos = Vector2(center_x + (i-1)*90, 150 + i*40)
-				var s = _spawn_ship(Vector2(target_pos.x, -100))
+				var s = _spawn_ship(target_pos)
 				if s: 
 					s.type = BaseEnemy.Type.STATIONARY; s.hp = 3
 					if s.has_method("play_fly_in"): s.play_fly_in(target_pos, 0.7)
@@ -794,7 +799,7 @@ func spawn_meteor_formation(type: String):
 			var center_x = randf_range(120, view_size.x - 120)
 			for i in range(5):
 				var target_pos = Vector2(center_x + (i-2)*75, 120 + abs(i-2)*60)
-				var s = _spawn_ship(Vector2(target_pos.x, -100))
+				var s = _spawn_ship(target_pos)
 				if s: 
 					s.type = BaseEnemy.Type.STATIONARY; s.hp = 3
 					if s.has_method("play_fly_in"): s.play_fly_in(target_pos, 0.6 + abs(i-2)*0.1)
@@ -829,6 +834,8 @@ func _spawn_ship(pos: Vector2, speed_override: float = 0.0) -> BaseEnemy:
 		
 	s.global_position = pos
 	if speed_override > 0: s.speed = speed_override
+	
+	_spawn_init(s)
 	if not s.killed.is_connected(_on_enemy_killed):
 		s.killed.connect(_on_enemy_killed)
 	if not s.hit.is_connected(_on_enemy_hit):
@@ -862,6 +869,8 @@ func _spawn_single_meteor(pos: Vector2, speed_override: float = 0.0, target_scal
 	m.set_meta("spawn_x", pos.x)
 	if speed_override > 0: m.speed = speed_override
 	m.movement_strategy = SimpleMovement.new()
+	
+	_spawn_init(m)
 	if not m.killed.is_connected(_on_enemy_killed):
 		m.killed.connect(_on_enemy_killed)
 	

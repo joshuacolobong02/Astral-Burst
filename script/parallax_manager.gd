@@ -32,8 +32,8 @@ func update_parallax(delta: float, current_stage_idx: int, player_pos: Vector2):
 			p.layer.motion_offset.y += current_scroll_speed * delta * p.depth
 			p.sprite.rotation += delta * p.rot
 
-func set_target_speed(speed: float):
-	_target_scroll_speed = speed
+func set_target_speed(p_speed: float):
+	_target_scroll_speed = p_speed
 
 func reset_offset():
 	_manual_scroll_offset = Vector2.ZERO

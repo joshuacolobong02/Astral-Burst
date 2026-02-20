@@ -164,11 +164,11 @@ func _on_button_up(btn: Control):
 	if btn == play_button and _breathing_tween and not is_hovering: 
 		_breathing_tween.play()
 
-func _tween_button(btn: Control, scale: Vector2, rotation: float = 0.0, duration: float = 0.2, modulate_color: Color = Color.WHITE):
+func _tween_button(btn: Control, p_scale: Vector2, p_rotation: float = 0.0, duration: float = 0.2, modulate_color: Color = Color.WHITE):
 	if _active_tweens.has(btn): _active_tweens[btn].kill()
 	var tween = create_tween().set_parallel(true)
-	tween.tween_property(btn, "scale", scale, duration).set_trans(Tween.TRANS_CUBIC)
-	tween.tween_property(btn, "rotation_degrees", rotation, duration).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(btn, "scale", p_scale, duration).set_trans(Tween.TRANS_CUBIC)
+	tween.tween_property(btn, "rotation_degrees", p_rotation, duration).set_trans(Tween.TRANS_CUBIC)
 	tween.tween_property(btn, "modulate", modulate_color, duration).set_trans(Tween.TRANS_CUBIC)
 	_active_tweens[btn] = tween
 
@@ -195,8 +195,10 @@ func _on_quit_button_pressed():
 func _on_settings_button_pressed():
 	if _transitioning: return
 	_play_click_anim(settings_button)
-	# Settings logic here
-	pass
+	
+	var settings_scene = preload("res://scene/settings_menu.tscn")
+	var settings_instance = settings_scene.instantiate()
+	add_child(settings_instance)
 
 func _play_click_anim(btn: Control):
 	var tween = create_tween()

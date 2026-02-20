@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://btcsabcxpijvk" path="res://asset/PNG/Lasers/LaserAstral.png" id="2_8sewo"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_8sewo"]
-radius = 6.0
+radius = 4.0
 height = 50.0
 
 [node name="Laser" type="Area2D" unique_id=1102671247]
@@ -14,7 +14,7 @@ script = ExtResource("1_8sewo")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1958010500]
 position = Vector2(9.536743e-07, -27.999998)
-scale = Vector2(0.03975535, 0.04678218)
+scale = Vector2(0.02, 0.04678218)
 texture = ExtResource("2_8sewo")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1898861744]

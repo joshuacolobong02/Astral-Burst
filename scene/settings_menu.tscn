@@ -1,0 +1,166 @@
+[gd_scene format=3 uid="uid://b5x7n7y802a1"]
+
+[ext_resource type="Script" uid="uid://cuxdm01qjxgl5" path="res://script/settings_menu.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://bqv28ofxt27hr" path="res://asset/Backgrounds/SettingsBG.png" id="2_bg"]
+[ext_resource type="Texture2D" uid="uid://5h4biuoyf0vq" path="res://asset/UI/Sound.png" id="3_sound"]
+[ext_resource type="Texture2D" uid="uid://dimsqt0fkt858" path="res://asset/UI/Music.png" id="4_music"]
+[ext_resource type="Texture2D" uid="uid://bpwrsef4t1e1v" path="res://asset/UI/Graphics.png" id="5_graphics"]
+[ext_resource type="Texture2D" uid="uid://kvwxebi7isyp" path="res://asset/UI/Speaker.png" id="6_speaker"]
+[ext_resource type="Texture2D" uid="uid://c6488u1h02dnw" path="res://asset/UI/Save.png" id="7_save"]
+[ext_resource type="Texture2D" uid="uid://lkiviccsq4qo" path="res://asset/UI/Exit.png" id="8_exit"]
+
+[node name="SettingsMenu" type="Control" unique_id=1787422955]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="DimOverlay" type="ColorRect" parent="." unique_id=1039472451]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.470588)
+
+[node name="Panel" type="TextureRect" parent="." unique_id=1916145093]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -184.0
+offset_top = -253.5
+offset_right = 184.0
+offset_bottom = 253.5
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MainContainer" type="VBoxContainer" parent="Panel" unique_id=1016915172]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 40.0
+offset_top = 60.0
+offset_right = -40.0
+offset_bottom = -60.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 25
+alignment = 1
+
+[node name="SoundSection" type="VBoxContainer" parent="Panel/MainContainer" unique_id=781253768]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Header" type="TextureRect" parent="Panel/MainContainer/SoundSection" unique_id=1678695458]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+texture = ExtResource("3_sound")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ControlRow" type="HBoxContainer" parent="Panel/MainContainer/SoundSection" unique_id=2131211087]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SpeakerIcon" type="TextureRect" parent="Panel/MainContainer/SoundSection/ControlRow" unique_id=780487640]
+custom_minimum_size = Vector2(20, 24)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("6_speaker")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SoundSlider" type="HSlider" parent="Panel/MainContainer/SoundSection/ControlRow" unique_id=2104920846]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="MusicSection" type="VBoxContainer" parent="Panel/MainContainer" unique_id=1685763824]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Header" type="TextureRect" parent="Panel/MainContainer/MusicSection" unique_id=250400137]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+texture = ExtResource("4_music")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ControlRow" type="HBoxContainer" parent="Panel/MainContainer/MusicSection" unique_id=1361853318]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="SpeakerIcon" type="TextureRect" parent="Panel/MainContainer/MusicSection/ControlRow" unique_id=1817242566]
+custom_minimum_size = Vector2(20, 24)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("6_speaker")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MusicSlider" type="HSlider" parent="Panel/MainContainer/MusicSection/ControlRow" unique_id=1814887934]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+
+[node name="GraphicsSection" type="VBoxContainer" parent="Panel/MainContainer" unique_id=1282467457]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="Header" type="TextureRect" parent="Panel/MainContainer/GraphicsSection" unique_id=2094105364]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+texture = ExtResource("5_graphics")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="GraphicsOption" type="OptionButton" parent="Panel/MainContainer/GraphicsSection" unique_id=1162092509]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+selected = 1
+item_count = 3
+popup/item_0/text = "Low"
+popup/item_0/id = 0
+popup/item_1/text = "Medium"
+popup/item_1/id = 1
+popup/item_2/text = "High"
+popup/item_2/id = 2
+
+[node name="Spacer" type="Control" parent="Panel/MainContainer" unique_id=1850558061]
+custom_minimum_size = Vector2(0, 15)
+layout_mode = 2
+
+[node name="Footer" type="HBoxContainer" parent="Panel/MainContainer" unique_id=1509532620]
+layout_mode = 2
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="SaveButton" type="TextureButton" parent="Panel/MainContainer/Footer" unique_id=2051639767]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(68, 51)
+layout_mode = 2
+texture_normal = ExtResource("7_save")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="ExitButton" type="TextureButton" parent="Panel/MainContainer/Footer" unique_id=2113210663]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(68, 51)
+layout_mode = 2
+texture_normal = ExtResource("8_exit")
+ignore_texture_size = true
+stretch_mode = 5

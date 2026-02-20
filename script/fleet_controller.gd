@@ -11,21 +11,25 @@ var current_speed := 150.0
 var dive_timer := 0.0
 var total_initial_meteors := 0
 
+var _left_extent := 0.0
+var _right_extent := 0.0
+var _extent_dirty := true
+
 @onready var enemy_container = $"../EnemyContainer"
 @onready var player = $"../Player"
 
-func setup_grid(r: int, c: int, s: Vector2, speed: float):
+func setup_grid(r: int, c: int, s: Vector2, p_speed: float):
 	rows = r
 	cols = c
 	spacing = s
-	base_speed = speed * 1.2 # Boost speed slightly for difficulty
+	base_speed = p_speed * 1.2 # Boost speed slightly for difficulty
 	
 	# Clear existing
 	for child in get_children():
 		child.queue_free()
 		
 	var view_width = 402
-	var start_x = (view_width - (cols * spacing.x)) / 2
+	var start_x = (view_width - (cols * spacing.x)) / 2.0
 	
 	for row in rows:
 		for col in cols:
@@ -34,6 +38,7 @@ func setup_grid(r: int, c: int, s: Vector2, speed: float):
 	
 	total_initial_meteors = get_child_count()
 	current_speed = base_speed
+	_extent_dirty = true
 
 func spawn_unit(slot_pos: Vector2):
 	# Dedicated Ship Fleet (No meteors)
@@ -65,6 +70,8 @@ func spawn_unit(slot_pos: Vector2):
 	
 	if unit.has_method("reset_pool_state"):
 		unit.reset_pool_state()
+	
+	_extent_dirty = true
 
 func _physics_process(delta: float):
 	if get_child_count() == 0: return
@@ -77,17 +84,21 @@ func _physics_process(delta: float):
 	# 2. Horizontal Movement
 	position.x += direction * current_speed * delta
 	
-	# 3. Edge Detection
-	if _check_bounds():
-		# Only flip if moving towards the edge
-		if (direction > 0 and _is_at_right_edge()) or (direction < 0 and _is_at_left_edge()):
-			direction *= -1
-			# Smooth vertical drop
-			var drop_tween = create_tween()
-			drop_tween.tween_property(self, "position:y", position.y + drop_distance, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
-			
-			# Tighten formation slightly on drop
-			spacing *= 0.98 
+	# 3. Edge Detection (Optimized)
+	if _extent_dirty:
+		_update_extents()
+		
+	var global_left = position.x + _left_extent
+	var global_right = position.x + _right_extent
+	
+	if (direction > 0 and global_right > 382) or (direction < 0 and global_left < 20):
+		direction *= -1
+		# Smooth vertical drop
+		var drop_tween = create_tween()
+		drop_tween.tween_property(self, "position:y", position.y + drop_distance, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+		
+		# Tighten formation slightly on drop
+		spacing *= 0.98 
 
 	# 4. Random Dive Logic
 	dive_timer += delta
@@ -96,22 +107,20 @@ func _physics_process(delta: float):
 		trigger_random_dive()
 		dive_timer = 0.0
 
-func _check_bounds() -> bool:
-	return _is_at_left_edge() or _is_at_right_edge()
-
-func _is_at_left_edge() -> bool:
-	var left_limit = 20 - position.x
-	for m in get_children():
-		if m.position.x < left_limit:
-			return true
-	return false
-
-func _is_at_right_edge() -> bool:
-	var right_limit = 382 - position.x
-	for m in get_children():
-		if m.position.x > right_limit:
-			return true
-	return false
+func _update_extents():
+	var children = get_children()
+	if children.is_empty():
+		_left_extent = 0
+		_right_extent = 0
+		return
+		
+	_left_extent = INF
+	_right_extent = -INF
+	for child in children:
+		var x = child.position.x
+		if x < _left_extent: _left_extent = x
+		if x > _right_extent: _right_extent = x
+	_extent_dirty = false
 
 func trigger_random_dive():
 	var children = get_children()
@@ -125,6 +134,10 @@ func trigger_random_dive():
 	enemy_container.add_child(unit)
 	unit.global_position = global_start
 	
+	var game = get_tree().current_scene
+	if game and game.has_method("_spawn_init"):
+		game._spawn_init(unit)
+	
 	# Switch to Seeker/Dive logic
 	if unit is BaseEnemy:
 		unit.type = BaseEnemy.Type.SEEKER
@@ -136,3 +149,5 @@ func trigger_random_dive():
 			strategy.target_player = player
 		strategy.velocity = Vector2(0, 250)
 		unit.movement_strategy = strategy
+	
+	_extent_dirty = true

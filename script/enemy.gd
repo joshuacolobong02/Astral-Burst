@@ -4,6 +4,7 @@ signal killed(points, pos)
 signal hit
 signal laser_shot(pos, direction)
 signal meteor_shot(pos, direction, scale)
+signal despawned(node)
 
 enum Type { LINEAR, ORBITAL, ELITE, INFINITY, SEEKER, STRATEGY, STRIKER, STATIONARY }
 @export var type: Type = Type.STATIONARY
@@ -35,7 +36,9 @@ var velocity: Vector2 = Vector2.ZERO
 var player: Node2D
 var ai_shoot_timer := 0.0
 @export var ai_shoot_interval := 1.5
-var enemy_laser_scene = preload("res://scene/enemy_laser.tscn")
+
+static var _cached_viewport_rect: Rect2
+static var _last_rect_update := -1
 
 func _ready():
 	add_to_group("enemy")
@@ -48,8 +51,8 @@ func _ready():
 	
 	_apply_hit_shader()
 	
-	# Try to find player
-	player = get_tree().current_scene.get_node_or_null("Player")
+	# Initial player search
+	player = get_tree().get_first_node_in_group("player")
 	
 	# Randomize first shot
 	ai_shoot_timer = randf_range(0.5, ai_shoot_interval)
@@ -87,35 +90,27 @@ func play_fly_in(target_pos: Vector2, duration: float = 1.0):
 	is_spawning = true
 	var start_pos = global_position
 	
-	# 1. ARC PATH SETUP: Graceful curve based on distance
+	# ARC PATH SETUP
 	var mid_point = (start_pos + target_pos) / 2.0
 	var dist = start_pos.distance_to(target_pos)
 	var offset_dir = (target_pos - start_pos).rotated(PI/2).normalized()
 	var control_point = mid_point + offset_dir * (dist * 0.3) * (1 if randf() > 0.5 else -1)
 	
-	# Initial Look-at
 	rotation = (control_point - start_pos).angle() + PI/2
 	
-	# 2. GHOST TRAIL: Ethereal blue trail
+	# GHOST TRAIL (Simplified for performance)
 	var flight_trail = Line2D.new()
-	flight_trail.width = 10.0
-	flight_trail.default_color = Color(0.2, 0.5, 1.0, 0.4)
-	flight_trail.gradient = Gradient.new()
-	flight_trail.gradient.set_color(0, Color(0.2, 0.5, 1.0, 0.0))
-	flight_trail.gradient.set_color(1, Color(0.4, 0.7, 1.0, 0.6))
-	flight_trail.joint_mode = Line2D.LINE_JOINT_ROUND
-	flight_trail.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	flight_trail.width = 8.0
+	flight_trail.default_color = Color(0.2, 0.5, 1.0, 0.3)
 	get_tree().current_scene.add_child.call_deferred(flight_trail)
 	
 	var tween = create_tween().set_parallel(true)
 	
-	# 3. SMOOTH FLIGHT: Quintic easing for premium feel
 	tween.tween_method(func(t):
 		var q0 = start_pos.lerp(control_point, t)
 		var q1 = control_point.lerp(target_pos, t)
 		var next_pos = q0.lerp(q1, t)
 		
-		# Smoothly rotate to face movement
 		var move_dir = (next_pos - global_position).normalized()
 		if move_dir.length() > 0.01:
 			var target_rot = move_dir.angle() + PI/2
@@ -123,12 +118,11 @@ func play_fly_in(target_pos: Vector2, duration: float = 1.0):
 			
 		global_position = next_pos
 		flight_trail.add_point(next_pos)
-		if flight_trail.get_point_count() > 20:
+		if flight_trail.get_point_count() > 15:
 			flight_trail.remove_point(0)
 			
 	, 0.0, 1.0, duration).set_trans(Tween.TRANS_QUINT).set_ease(Tween.EASE_OUT)
 	
-	# 4. ARRIVAL TRANSITION
 	tween.set_parallel(false)
 	tween.tween_callback(func():
 		is_spawning = false
@@ -138,44 +132,50 @@ func play_fly_in(target_pos: Vector2, duration: float = 1.0):
 
 func _fade_trail(trail: Line2D):
 	var ft = create_tween()
-	ft.tween_property(trail, "modulate:a", 0.0, 0.4)
+	ft.tween_property(trail, "modulate:a", 0.0, 0.3)
 	ft.tween_callback(trail.queue_free)
 
 func _trigger_soft_landing(target_pos: Vector2):
-	# Gentle stabilization
 	var final_rot = 0.0
 	if is_instance_valid(player):
 		var p_dir = (player.global_position - target_pos).normalized()
 		final_rot = p_dir.angle() + PI/2
 		
 	var st = create_tween().set_parallel(true)
-	st.tween_property(self, "rotation", final_rot, 0.5).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	
-	# Subtle breath effect on arrival
-	sprite.scale = _base_scale * 0.9
-	st.tween_property(sprite, "scale", _base_scale, 0.4).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	
-	# Soft glow pulse
-	sprite.set_instance_shader_parameter("hit_strength", 0.4)
-	var gt = create_tween()
-	gt.tween_method(func(v): sprite.set_instance_shader_parameter("hit_strength", v), 0.4, 0.0, 0.6)
+	st.tween_property(self, "rotation", final_rot, 0.5).set_trans(Tween.TRANS_SINE)
+	st.tween_property(sprite, "scale", _base_scale, 0.4).from(_base_scale * 0.9)
 
 func _physics_process(delta):
 	if is_dead or is_spawning: return
 	
-	if !is_instance_valid(player):
+	# Efficient player tracking
+	if not is_instance_valid(player):
 		player = get_tree().get_first_node_in_group("player")
 	
 	if movement_strategy:
 		movement_strategy.update(self, delta)
 	else:
-		if type == Type.STATIONARY:
+		_apply_default_movement(delta)
+				
+	if type != Type.LINEAR:
+		ai_shoot_timer -= delta
+		if ai_shoot_timer <= 0:
+			shoot()
+			ai_shoot_timer = ai_shoot_interval
+			
+	if type == Type.STATIONARY and !is_dead and sprite:
+		var bob_offset = sin(Time.get_ticks_msec() * 0.003) * 2.0
+		sprite.position.y = _sprite_base_pos.y + bob_offset
+
+func _apply_default_movement(delta):
+	match type:
+		Type.STATIONARY:
 			if is_instance_valid(player):
 				var target_dir = (player.global_position - global_position).normalized()
 				rotation = lerp_angle(rotation, target_dir.angle() + PI/2, delta * 5.0)
-		elif type == Type.LINEAR:
+		Type.LINEAR:
 			global_position.y += speed * delta
-		elif type == Type.SEEKER:
+		Type.SEEKER:
 			if is_instance_valid(player):
 				var target_dir = (player.global_position - global_position).normalized()
 				velocity = velocity.lerp(target_dir * speed, delta * 3.0)
@@ -183,38 +183,28 @@ func _physics_process(delta):
 				rotation = velocity.angle() + PI/2
 			else:
 				global_position.y += speed * delta
-		elif type == Type.STRIKER:
+		Type.STRIKER:
 			if is_instance_valid(player):
 				var target_y = 180.0 + (get_index() % 4) * 35.0
-				var move_speed = speed * delta
 				if global_position.y < target_y:
-					global_position.y += move_speed * 0.5
+					global_position.y += speed * delta * 0.5
 				var dx = player.global_position.x - global_position.x
-				var strafe_force = clamp(dx * 0.05, -1.0, 1.0)
-				velocity.x = lerp(velocity.x, strafe_force * speed, delta * 2.0)
+				velocity.x = lerp(velocity.x, clamp(dx * 0.05, -1.0, 1.0) * speed, delta * 2.0)
 				global_position.x += velocity.x * delta
 				rotation = lerp_angle(rotation, velocity.x * 0.005, delta * 5.0)
 			else:
 				global_position.y += speed * delta
-				
-	if type == Type.SEEKER or type == Type.ELITE or type == Type.STRIKER or type == Type.STATIONARY or type == Type.STRATEGY:
-		ai_shoot_timer -= delta
-		if ai_shoot_timer <= 0:
-			shoot()
-			ai_shoot_timer = ai_shoot_interval
-			
-	var hit_running = current_hit_tween != null and current_hit_tween.is_running()
-	if type == Type.STATIONARY and !is_dead and !hit_running and sprite:
-		var bob_offset = sin(Time.get_ticks_msec() * 0.003 + get_instance_id()) * 2.0
-		sprite.position.y = _sprite_base_pos.y + bob_offset
 
 func shoot():
 	if is_dead or is_spawning: return
-	if !is_instance_valid(player):
-		player = get_tree().get_first_node_in_group("player")
 	
-	var viewport_rect = get_viewport_rect().grow(100.0) # Grow slightly to allow edge shooting
-	if !viewport_rect.has_point(global_position): return
+	# Static Viewport Cache
+	var ticks = Engine.get_process_frames()
+	if _last_rect_update != ticks:
+		_cached_viewport_rect = get_viewport_rect().grow(100.0)
+		_last_rect_update = ticks
+		
+	if !_cached_viewport_rect.has_point(global_position): return
 	
 	var dir = Vector2.DOWN
 	if is_instance_valid(player):
@@ -225,11 +215,9 @@ func shoot():
 	else:
 		laser_shot.emit(global_position, dir)
 
-
 func die():
-	if current_hit_tween:
-		current_hit_tween.kill()
-	
+	if current_hit_tween: current_hit_tween.kill()
+	despawned.emit(self)
 	hide()
 	set_process(false)
 	set_physics_process(false)
@@ -243,7 +231,7 @@ func die():
 		queue_free()
 
 func _on_visible_on_screen_notifier_2d_screen_exited():
-	queue_free()
+	die()
 
 func _on_body_entered(body):
 	if body.is_in_group("player"):
@@ -264,8 +252,7 @@ func take_damage(amount):
 		hp_label.visible = true
 	
 	if sprite:
-		if current_hit_tween:
-			current_hit_tween.kill()
+		if current_hit_tween: current_hit_tween.kill()
 		current_hit_tween = create_tween()
 		current_hit_tween.set_parallel(true)
 		sprite.set_instance_shader_parameter("hit_strength", 1.0)

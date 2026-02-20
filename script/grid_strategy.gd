@@ -15,8 +15,4 @@ func update(meteor: Node2D, delta: float):
 		meteor.position.y += 100 * delta
 	
 	# The horizontal part is usually handled by FleetMovement or the FleetController
-	# But if we want it to be part of the strategy:
-	var row = grid_index / cols
-	var col = grid_index % cols
-	
 	# We don't force position here to allow FleetController to shift the whole group
